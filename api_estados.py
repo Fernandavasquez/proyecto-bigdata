@@ -1,7 +1,5 @@
 import datetime
-
 import requests
-
 from dynamodb import DynamoDB
 
 
