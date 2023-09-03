@@ -24,16 +24,14 @@ while not exitw:
             db.insertar_datos_en_mysqlCoin(db.conexion_mysql, datos_dynamodb2)
             db.insertar_datos_en_mysqlWeather(db.conexion_mysql, datos_dynamodb3)
         case '2':
+
+            print('Table Country Query')
             # Solicitar al usuario que ingrese el país a buscar
-            nombre_a_buscar = input("Ingrese el país que desea buscar: ")
+            busqueda = input("Ingrese el nombre del pais a buscar")
+            db.query_MysqlCountry(busqueda)
 
-            # Realizar la búsqueda en la tabla 'tblcountry'
-            resultado = db.buscar_dato_en_mysqlCountry('tblcountry', 'name', nombre_a_buscar)
 
-            if resultado:
-                print("Resultado de la búsqueda:", resultado)
-            else:
-                print("El país no se encontró en la base de datos.")
+
 
         case '3':
             pass

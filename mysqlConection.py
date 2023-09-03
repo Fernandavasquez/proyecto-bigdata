@@ -2,6 +2,7 @@ import boto3
 import mysql.connector
 
 # Configurar la conexión a DynamoDB
+
 dynamodb = boto3.resource('dynamodb',
             aws_access_key_id='AKIA24QP3VLBMDCF3VBR',
             aws_secret_access_key='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',
@@ -16,8 +17,8 @@ nombre_tabla_dynamodb3 = 'country_weather'
 conexion_mysql = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="1433",
-    database="mysqldb"
+    password="Ferchis03",
+    database="bdproyectoa"
 )
 
 
@@ -83,16 +84,19 @@ def insertar_datos_en_mysqlWeather(conexion_mysql, datos):
         print(f"Error al insertar datos en MySQL: {err}")
 
 
-def buscar_dato_en_mysqlCountry(self, tabla, columna, valor: str):
-    if not self.conn:
-        print("Error: No se ha establecido la conexión a MySQL")
-        return []
+def query_MysqlCountry(busqueda):
+    consulta = "SELECT * FROM tblcountry WHERE name = %s"
+    valor_a_buscar = busqueda
 
-    try:
-        query = f"SELECT * FROM {tabla} WHERE {columna} = %s"
-        self.cursor.execute(query, (valor,))
-        resultados = self.cursor.fetchall()
-        return resultados
-    except mysql.connector.Error as err:
-        print(f"Error al buscar dato en MySQL: {err}")
-        return []
+    cursor_mysql.execute(consulta, (valor_a_buscar,))
+
+    # Obtiene los resultados
+    resultados = cursor_mysql.fetchall()
+
+    # Itera a través de los resultados
+    for fila in resultados:
+        # Accede a las columnas de la fila como fila[0], fila[1], etc.
+        print(fila)
+
+
+
