@@ -1,5 +1,6 @@
 import boto3
 import mysql.connector
+import datetime
 import mysqlConection
 
 db = mysqlConection
@@ -29,9 +30,16 @@ while not exitw:
             # Solicitar al usuario que ingrese el país a buscar
             busqueda = input("Ingrese el nombre del pais a buscar")
             db.query_MysqlCountry(busqueda)
-
-
-
+            print('Ingrese la fecha de inico para obtener los datos YYYY-mm-dd:')
+            year = int(input('Ingrese el año: '))
+            month = int(input('Ingrese el mes: '))
+            day = int(input('Ingrese el dia: '))
+            date = datetime.date(year, month, day)
+            while date < datetime.date.today():
+                print('DATOS CON RESPECTO A LA FECHA: ' + str(date))
+                print('COIN')
+                query_2 = str(date) + 'GT' + '-C'
+                db.query_dataCC(query_2)
 
         case '3':
             pass

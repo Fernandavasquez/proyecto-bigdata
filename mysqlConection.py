@@ -1,8 +1,8 @@
 import boto3
 import mysql.connector
 
-# Configurar la conexión a DynamoDB
 
+# Configurar la conexión a DynamoDB
 dynamodb = boto3.resource('dynamodb',
             aws_access_key_id='AKIA24QP3VLBMDCF3VBR',
             aws_secret_access_key='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',
@@ -20,11 +20,8 @@ conexion_mysql = mysql.connector.connect(
     password="Ferchis03",
     database="bdproyectoa"
 )
-
-
 # Crear un objeto cursor para interactuar con MySQL
 cursor_mysql = conexion_mysql.cursor()
-
 
 # Función para extraer datos de DynamoDB
 def extraer_datos_de_dynamodbCountry(tabla_dynamodb):
@@ -39,7 +36,9 @@ def extraer_datos_de_dynamodbCoin(tabla_dynamodb):
     datos_dynamodb = []
 
     for item in tabla_dynamodb.scan()['Items']:
-        datos_dynamodb.append((item['id'], item['country_id']))
+        datos_dynamodb.append((item['id'], item['country_id'], item['base'], item['currencies_value']['GTQ'],
+                               item['currencies_value']['USD'], item['currencies_value']['EUR']))
+    print(datos_dynamodb)
 
     return datos_dynamodb
 
@@ -63,7 +62,7 @@ def insertar_datos_en_mysqlCountry(conexion_mysql, datos):
         print(f"Error al insertar datos en MySQL: {err}")
 
 def insertar_datos_en_mysqlCoin(conexion_mysql, datos):
-    insert_query = "INSERT INTO tblcountrycoin (id_coin, country_id) VALUES (%s, %s)"
+    insert_query = "INSERT INTO tblcountrycoin (id_coin, country_id, base, GTQ, USD, EUR) VALUES (%s, %s,%s, %s, %s, %s)"
 
     try:
         cursor_mysql.executemany(insert_query, datos)
@@ -98,5 +97,19 @@ def query_MysqlCountry(busqueda):
         # Accede a las columnas de la fila como fila[0], fila[1], etc.
         print(fila)
 
+def query_dataCC(busqueda):
+    consulta = "SELECT * FROM tblcountrycoin WHERE id_coin = %s"
+    valor_a_buscar = busqueda
 
+    cursor_mysql.execute(consulta, (valor_a_buscar,))
 
+    # Obtiene los resultados
+    resultados = cursor_mysql.fetchall()
+
+    if len(resultados['Items']):
+        print('El id de la moneda que busca no existe!')
+    else:
+        for i in resultados['Items']:
+            print('LA BASE DE LA CONVERSION ES: ' + i['base'])
+            print('LOS VALORES DE LA CONVERSION SON:')
+            print(i['currencies_value'])
