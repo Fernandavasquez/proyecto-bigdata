@@ -17,13 +17,16 @@ while not exitw:
     match option:
         case '1':
             # Obtener datos de DynamoDB
-            datos_dynamodb = db.extraer_datos_de_dynamodbCountry(db.dynamodb.Table(db.nombre_tabla_dynamodb))
-            datos_dynamodb2 = db.extraer_datos_de_dynamodbCoin(db.dynamodb.Table(db.nombre_tabla_dynamodb2))
-            datos_dynamodb3 = db.extraer_datos_de_dynamodbWeather(db.dynamodb.Table(db.nombre_tabla_dynamodb3))
+            datos_dynamodb_country, datos_dynamodb_states = db.extraer_datos_de_dynamodbCountry(db.dynamodb.Table(db.nombre_tabla_dynamodb))
+            datos_dynamodb_coin = db.extraer_datos_de_dynamodbCoin(db.dynamodb.Table(db.nombre_tabla_dynamodb2))
+            datos_dynamodb_cweather, datos_dynamodb_weather = db.extraer_datos_de_dynamodbWeather(db.dynamodb.Table(db.nombre_tabla_dynamodb3))
+
             # Insertar los datos en MySQL
-            db.insertar_datos_en_mysqlCountry(db.conexion_mysql, datos_dynamodb)
-            db.insertar_datos_en_mysqlCoin(db.conexion_mysql, datos_dynamodb2)
-            db.insertar_datos_en_mysqlWeather(db.conexion_mysql, datos_dynamodb3)
+            db.insertar_datos_en_mysqlCountry(db.conexion_mysql, datos_dynamodb_country)
+            db.insertar_datos_en_mysqlStates(db.conexion_mysql, datos_dynamodb_states)
+            db.insertar_datos_en_mysqlCoin(db.conexion_mysql, datos_dynamodb_coin)
+            db.insertar_datos_en_mysqlCWeather(db.conexion_mysql, datos_dynamodb_cweather)
+            db.insertar_datos_en_mysqlWeather(db.conexion_mysql, datos_dynamodb_weather)
         case '2':
 
             print('Table Country Query')

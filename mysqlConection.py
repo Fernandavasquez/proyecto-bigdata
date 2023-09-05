@@ -18,7 +18,7 @@ conexion_mysql = mysql.connector.connect(
     host="localhost",
     user="root",
     password="Ferchis03",
-    database="bdproyectoa"
+    database="dbProyecto"
 )
 # Crear un objeto cursor para interactuar con MySQL
 cursor_mysql = conexion_mysql.cursor()
@@ -26,33 +26,53 @@ cursor_mysql = conexion_mysql.cursor()
 # Función para extraer datos de DynamoDB
 def extraer_datos_de_dynamodbCountry(tabla_dynamodb):
     datos_dynamodb = []
+    datos_dynamodb_states = []
 
     for item in tabla_dynamodb.scan()['Items']:
-        datos_dynamodb.append((item['name'], item['country_id']))
+        datos_dynamodb.append((item['name'], item['country_id'], item['currencies'][0]))
+        for item2 in item['states']:
+            datos_dynamodb_states.append((item2, item['country_id']))
 
-    return datos_dynamodb
+
+    return datos_dynamodb, datos_dynamodb_states
+
 
 def extraer_datos_de_dynamodbCoin(tabla_dynamodb):
     datos_dynamodb = []
 
     for item in tabla_dynamodb.scan()['Items']:
-        datos_dynamodb.append((item['id'], item['country_id'], item['base'], item['currencies_value']['GTQ'],
-                               item['currencies_value']['USD'], item['currencies_value']['EUR']))
-    print(datos_dynamodb)
+        datos_dynamodb.append((item['id'], item['base'], item['currencies_value']['GTQ'],
+                               item['currencies_value']['USD'], item['currencies_value']['EUR'],
+                               item['country_id']))
+
 
     return datos_dynamodb
 
 def extraer_datos_de_dynamodbWeather(tabla_dynamodb):
     datos_dynamodb = []
-
+    datos_dynamodb_weather = []
     for item in tabla_dynamodb.scan()['Items']:
-        datos_dynamodb.append((item['id'], item['country_id']))
+        datos_dynamodb.append((item['id'], item['id'][:10], item['country_id']))
+        for item2 in item['state_weather']:
+            datos_dynamodb_weather.append((item2['state_name'],
+                               item2['weather_data']['Max'], item2['weather_data']['Min'],
+                               item2['weather_data']['Promedio'], item['id']))
 
-    return datos_dynamodb
+    return datos_dynamodb, datos_dynamodb_weather
 
 # Función para insertar datos en MySQL
 def insertar_datos_en_mysqlCountry(conexion_mysql, datos):
-    insert_query = "INSERT INTO tblcountry (name, country_id) VALUES (%s, %s)"
+    insert_query = "INSERT INTO tblcountry (name, country_id, base) VALUES (%s, %s, %s)"
+
+    try:
+        cursor_mysql.executemany(insert_query, datos)
+        conexion_mysql.commit()
+        print("Datos insertados en MySQL correctamente.")
+    except mysql.connector.Error as err:
+        print(f"Error al insertar datos en MySQL: {err}")
+
+def insertar_datos_en_mysqlStates(conexion_mysql, datos):
+    insert_query = "INSERT INTO tblestados (name, tblcountry_country_id) VALUES (%s, %s)"
 
     try:
         cursor_mysql.executemany(insert_query, datos)
@@ -62,7 +82,7 @@ def insertar_datos_en_mysqlCountry(conexion_mysql, datos):
         print(f"Error al insertar datos en MySQL: {err}")
 
 def insertar_datos_en_mysqlCoin(conexion_mysql, datos):
-    insert_query = "INSERT INTO tblcountrycoin (id_coin, country_id, base, GTQ, USD, EUR) VALUES (%s, %s,%s, %s, %s, %s)"
+    insert_query = "INSERT INTO tblcountrycoin (id_coin, base, GTQ, USD, EUR, tblcountry_country_id) VALUES (%s, %s,%s, %s, %s, %s)"
 
     try:
         cursor_mysql.executemany(insert_query, datos)
@@ -72,8 +92,19 @@ def insertar_datos_en_mysqlCoin(conexion_mysql, datos):
         print(f"Error al insertar datos en MySQL: {err}")
 
 
+def insertar_datos_en_mysqlCWeather(conexion_mysql, datos):
+    insert_query = "INSERT INTO tblcountry_weather (id, date, tblcountry_country_id) VALUES (%s, %s, %s)"
+
+    try:
+        cursor_mysql.executemany(insert_query, datos)
+        conexion_mysql.commit()
+        print("Datos insertados en MySQL correctamente.")
+    except mysql.connector.Error as err:
+        print(f"Error al insertar datos en MySQL: {err}")
+
 def insertar_datos_en_mysqlWeather(conexion_mysql, datos):
-    insert_query = "INSERT INTO tblCountry_weather (id_weather, country_id) VALUES (%s, %s)"
+    insert_query = "INSERT INTO tblweather (state_name, min, max, promedio, tblcountry_weather_id) " \
+                   "VALUES (%s, %s, %s, %s, %s)"
 
     try:
         cursor_mysql.executemany(insert_query, datos)
