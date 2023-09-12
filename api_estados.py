@@ -1,9 +1,7 @@
 import datetime
-
 import requests
-
-from dynamodb import DynamoDB
 from mongo import MongoDB
+
 
 class Country:
     def __init__(self, name: str):
@@ -32,18 +30,18 @@ class Country:
                 self.__country['country_id'] = str(countries['country_short_name'])
                 self.__country_id = str(countries['country_short_name'])
                 break
-        url = "https://www.universal-tutorial.com/api/states/"+self.__name
+        url = "https://www.universal-tutorial.com/api/states/" + self.__name
 
         response = requests.get(url, headers=headers).json()
         self.__states = []
         for state in response:
-            self.__states .append(str(state['state_name']))
+            self.__states.append(str(state['state_name']))
         self.__country['states'] = self.__states
         self.get_symbol()
 
     def get_symbol(self):
         auxlist = []
-        url = "https://restcountries.com/v3.1/name/"+self.__name
+        url = "https://restcountries.com/v3.1/name/" + self.__name
         response = requests.get(url).json()
         for info in response:
             if info['currencies']:
@@ -52,36 +50,31 @@ class Country:
 
         self.__country['currencies'] = auxlist
         self.__base = auxlist[0]
+
     def get_states(self):
         return self.__states
+
     def insert_country_data(self):
         db = MongoDB()
         db.insert_dataC(self.__country)
-    def get_weather(self):
-        for state in self.__states:
-            url = "http://api.weatherapi.com/v1/forecast.json?key=d7fbf6662aa24f3aaff20505232208&q=" + state
-
-            response = requests.get(url).json()
-            print('Departamento/Estado: ' + state)
-            print('Fecha:' + response['forecast']['forecastday'][0]['date'])
-            print('Min: ' + response['forecast']['forecastday'][0]['day']['mintemp_c'] + 'C°')
-            print('Max: ' + response['forecast']['forecastday'][0]['day']['maxtemp_c'] + 'C°')
-            print('Promedio: ' + response['forecast']['forecastday'][0]['day']['avgtemp_c' + 'C°'])
 
     def insert_weather(self, date):
-        #date = datetime.date(2023, 5, 27)
         db = MongoDB()
         while date <= datetime.date.today():
-            country_weather = {'_id': str(date) + self.__country_id+"-W", 'country_id': self.__country_id, 'state_weather': []}
+            cont = 0
+            country_weather = {'_id': str(date) + self.__country_id + "-W", 'country_id': self.__country_id,
+                               'state_weather': []}
             for state in self.get_states():
                 url = "http://api.weatherapi.com/v1/history.json?key=c1c948ad023a40d78f263757231209&q=" + state + "&dt=" + str(
                     date)
                 response = requests.get(url).json()
-                weather_data = {}
-                weather_data['Min'] = str(response['forecast']['forecastday'][0]['day']['mintemp_c'])
-                weather_data['Max'] = str(response['forecast']['forecastday'][0]['day']['maxtemp_c'])
-                weather_data['Promedio'] = str(response['forecast']['forecastday'][0]['day']['avgtemp_c'])
-                country_weather['state_weather'].append({'state_name': state, 'weather_data': weather_data})
+                if 'error' not in response:
+                    weather_data = {'Min': str(response['forecast']['forecastday'][0]['day']['mintemp_c']),
+                                    'Max': str(response['forecast']['forecastday'][0]['day']['maxtemp_c']),
+                                    'Promedio': str(response['forecast']['forecastday'][0]['day']['avgtemp_c'])}
+                    country_weather['state_weather'].append({'state_name': state, 'weather_data': weather_data})
+                else:
+                    cont += 1
             date += datetime.timedelta(days=1)
             print(date)
             db.insert_dataCW(country_weather)
@@ -93,16 +86,12 @@ class Country:
         response = requests.get(url).json()
         rates_data = response['rates']
         db = MongoDB()
-        print(f"Tipo de Cambio de Moneda en {self.__name}")
-        print('   Fecha    |    GTQ     |    USD     | EUR')
-        print('----------------------------------------')
 
         for date, rates in rates_data.items():
-            coin_value = {'_id': str(date) + self.__country_id+"-C", 'country_id': self.__country_id, 'base': self.__base}
-            coin_data = {}
-            coin_data['GTQ'] = str(rates.get('GTQ'))
-            coin_data['USD'] = str(rates.get('USD'))
-            coin_data['EUR'] = str(rates.get('EUR'))
+            coin_value = {'_id': str(date) + self.__country_id + "-C", 'country_id': self.__country_id,
+                          'base': self.__base}
+            coin_data = {'GTQ': str(rates.get('GTQ')),
+                         'USD': str(rates.get('USD')),
+                         'EUR': str(rates.get('EUR'))}
             coin_value['currencies_value'] = coin_data
-            # print(coin_value)
             db.insert_dataCC(coin_value)
