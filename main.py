@@ -1,54 +1,34 @@
 import datetime
 from dynamodb import DynamoDB
+from api_estados import Country
 
-db = DynamoDB()
 exitw = False
+print('-------------------------------------------')
+print('Inserte Nombre del Pais')
+pais = input("Ingrese un pais: ")
 
+new_country = Country(pais)
 while not exitw:
     print('-------------------------------------------')
-    print('1. Ver toda la tabla')
-    print('2. Buscar un dato en especifico')
-    print('3. Insertar un dato')
+    print('1. Insertar Pais')
+    print('2. Insertar Cambios de Moneda')
+    print('3. Insertar Clima')
     print('4. SALIR')
     option = input('Ingrese una opcion: ')
 
     match option:
         case '1':
-            print('Table Country')
-            db.show_table()
+            new_country.insert_country_data()
         case '2':
-            country_id = 'NONE'
-            print('Table Country Query')
-            search = input('Ingrese el pais a buscar: ')
-            db.query_dataC(search)
-            country_id = db.get_country_id()
-            if country_id != 'NONE':
-                print('Ingrese la fecha de inico para obtener los datos YYYY-mm-dd:')
-                year = int(input('Ingrese el año: '))
-                month = int(input('Ingrese el mes: '))
-                day = int(input('Ingrese el dia: '))
-                date = datetime.date(year, month, day)
-                while date < datetime.date.today():
-                    print('DATOS CON RESPECTO A LA FECHA: ' + str(date))
-                    print('COIN')
-                    query_2 = str(date) + country_id + '-C'
-                    db.query_dataCC(query_2)
-                    print('WEATHER')
-                    query_1 = str(date) + country_id + '-W'
-                    db.query_dataCW(query_1)
-                    date += datetime.timedelta(days=1)
 
+            new_country.insert_country_coin()
         case '3':
-            print('Table Country Insert')
-            country = {'name': input('Ingrese el nombre del pais: '),
-                       'contry_id': input('Ingrese pais: ')}
-            db.insert_dataC(country)
-            country_coin = {'id': input('Ingrese dato: '),
-                            'contry_id': input("Ingrese pais: ")}
-            db.insert_dataCC(country_coin)
-            contry_weather = {'id': input('Ingrese dato: '),
-                              'contry_id': input('Ingrese pais: ')}
-            db.insert_dataCW(contry_weather)
+            print('Ingrese la fecha de inico para obtener los datos YYYY-mm-dd:')
+            year = int(input('Ingrese el año: '))
+            month = int(input('Ingrese el mes: '))
+            day = int(input('Ingrese el dia: '))
+            date = datetime.date(year, month, day)
+            new_country.insert_weather(date)
 
         case '4':
             exitw = True
