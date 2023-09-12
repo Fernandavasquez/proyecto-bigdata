@@ -1,17 +1,13 @@
-import boto3
+import pymongo
 import mysql.connector
 
 
 # Configurar la conexión a DynamoDB
-dynamodb = boto3.resource('dynamodb',
-            aws_access_key_id='AKIA24QP3VLBMDCF3VBR',
-            aws_secret_access_key='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',
-            region_name='us-east-2')
-
-# Nombre de la tabla DynamoDB
-nombre_tabla_dynamodb = 'country'
-nombre_tabla_dynamodb2 = 'country_coin'
-nombre_tabla_dynamodb3 = 'country_weather'
+mongo = pymongo.MongoClient('mongodb://localhost:27017/')
+mongo_db = mongo['dbproyecto']
+mongo_country = mongo_db['country']
+mongo_countryc = mongo_db['country_coin']
+mongo_countryw = mongo_db['country_weather']
 
 # Establecer la conexión a MySQL
 conexion_mysql = mysql.connector.connect(
@@ -20,45 +16,42 @@ conexion_mysql = mysql.connector.connect(
     password="Ferchis03",
     database="dbProyecto"
 )
-# Crear un objeto cursor para interactuar con MySQL
+
+
 cursor_mysql = conexion_mysql.cursor()
 
 # Función para extraer datos de DynamoDB
-def extraer_datos_de_dynamodbCountry(tabla_dynamodb):
-    datos_dynamodb = []
-    datos_dynamodb_states = []
-
-    for item in tabla_dynamodb.scan()['Items']:
-        datos_dynamodb.append((item['name'], item['country_id'], item['currencies'][0]))
+def extraer_datos_de_mongoCountry():
+    datos_mongodb = []
+    datos_mongodb_states = []
+    mongo_dataC = mongo_country.find()
+    for item in mongo_dataC:
+        datos_mongodb.append((item['name'], item['country_id'], item['currencies'][0]))
         for item2 in item['states']:
-            datos_dynamodb_states.append((item2, item['country_id']))
+            datos_mongodb_states.append((item2, item['country_id']))
+    return datos_mongodb, datos_mongodb_states
 
 
-    return datos_dynamodb, datos_dynamodb_states
+def extraer_datos_de_mongodbCoin():
+    datos_mongodb = []
+    for item in mongo_countryc.find():
 
+        datos_mongodb.append((item['_id'], item['base'], item['currencies_value']['GTQ'],
+                              item['currencies_value']['USD'], item['currencies_value']['EUR'],
+                              item['country_id']))
+    return datos_mongodb
 
-def extraer_datos_de_dynamodbCoin(tabla_dynamodb):
-    datos_dynamodb = []
-
-    for item in tabla_dynamodb.scan()['Items']:
-        datos_dynamodb.append((item['id'], item['base'], item['currencies_value']['GTQ'],
-                               item['currencies_value']['USD'], item['currencies_value']['EUR'],
-                               item['country_id']))
-
-
-    return datos_dynamodb
-
-def extraer_datos_de_dynamodbWeather(tabla_dynamodb):
-    datos_dynamodb = []
-    datos_dynamodb_weather = []
-    for item in tabla_dynamodb.scan()['Items']:
-        datos_dynamodb.append((item['id'], item['id'][:10], item['country_id']))
+def extraer_datos_de_mongodbWeather():
+    datos_mongodb = []
+    datos_mongodb_weather = []
+    for item in mongo_countryw.find():
+        datos_mongodb.append((item['_id'], item['_id'][:10], item['country_id']))
         for item2 in item['state_weather']:
-            datos_dynamodb_weather.append((item2['state_name'],
+            datos_mongodb_weather.append((item2['state_name'],
                                item2['weather_data']['Max'], item2['weather_data']['Min'],
-                               item2['weather_data']['Promedio'], item['id']))
+                               item2['weather_data']['Promedio'], item['_id']))
 
-    return datos_dynamodb, datos_dynamodb_weather
+    return datos_mongodb, datos_mongodb_weather
 
 # Función para insertar datos en MySQL
 def insertar_datos_en_mysqlCountry(conexion_mysql, datos):
