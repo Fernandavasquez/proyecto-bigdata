@@ -1,4 +1,5 @@
 import boto3
+import pymongo
 from boto3.dynamodb.conditions import Key
 
 
@@ -20,8 +21,14 @@ class DynamoDB:
         )
 
         self.__ddb_exceptions = self.__client.exceptions
+        # Configurcion de la conexión a MongoDB
+        self.__mongo = pymongo.MongoClient('mongodb://localhost:27017/')
+        self.__mongo_db = self.__mongo['dbproyecto']
+        self.__mongo_country = self.__mongo_db['country']
+        self.__mongo_countryc = self.__mongo_db['country_coin']
+        self.__mongo_countryw = self.__mongo_db['country_weather']
 
-    def insert_dataC(self, data: dict):
+    def insert_data_country(self, data: dict):
         try:
             self.__dynamodb.Table('country').put_item(
                 Item=data
@@ -31,7 +38,7 @@ class DynamoDB:
             print('No se pudo insertar el elemento')
 
 
-    def insert_dataCC(self, data: dict):
+    def insert_data_country_coin(self, data: dict):
         try:
             self.__dynamodb.Table('country_coin').put_item(
                 Item=data
@@ -40,7 +47,7 @@ class DynamoDB:
         except self.__ddb_exceptions.ResourceInUseException:
             print('No se pudo insertar el elemento')
 
-    def insert_dataCW(self, data: dict):
+    def insert_data_country_weather(self, data: dict):
         try:
             self.__dynamodb.Table('country_weather').put_item(
                 Item=data
@@ -50,7 +57,7 @@ class DynamoDB:
             print('No se pudo insertar el elemento')
 
 
-    def query_dataC(self, key_value: str):
+    def query_data_country(self, key_value: str):
         response = self.__dynamodb.Table('country').query(
             KeyConditionExpression=Key('name').eq(key_value)
         )
@@ -64,7 +71,7 @@ class DynamoDB:
     def get_country_id(self):
         return str(self.__country_id)
 
-    def query_dataCC(self, key_value: str):
+    def query_data_country_coin(self, key_value: str):
         response = self.__dynamodb.Table('country_coin').query(
             KeyConditionExpression=Key('id').eq(key_value)
         )
@@ -76,7 +83,7 @@ class DynamoDB:
                 print('LOS VALORES DE LA CONVERSION SON:')
                 print(i['currencies_value'])
 
-    def query_dataCW(self, key_value: str):
+    def query_data_country_weather(self, key_value: str):
         response = self.__dynamodb.Table('country_weather').query(
             KeyConditionExpression=Key('id').eq(key_value)
         )
@@ -89,11 +96,26 @@ class DynamoDB:
                     print(x['weather_data'])
                     print('--------------------------------')
 
+    def get_country_data_from_mongodb(self, country):
+        list_country_data = []
+        for item in self.__mongo_country.find({'name': country}):
+            del item['_id']
+            self.__country_id = item['country_id']
+            list_country_data.append(item)
+        return list_country_data
 
-    def show_table(self):
-        response = self.__dynamodb.Table('country').scan()
-        if len(response['Items']) == 0:
-            print('Tabla vacia, agregue elementos')
-        else:
-            for i in response['Items']:
-                print(i)
+    def get_country_coin_data_from_mongodb(self):
+        list_country_coin_data = []
+        for item in self.__mongo_countryc.find({'country_id': self.__country_id}):
+            item['id'] = item['_id']
+            del item['_id']
+            list_country_coin_data.append(item)
+        return list_country_coin_data
+
+    def get_country_weather_data_from_mongodb(self):
+        list_country_weather_data = []
+        for item in self.__mongo_countryw.find({'country_id': self.__country_id}):
+            item['id'] = item['_id']
+            del item['_id']
+            list_country_weather_data.append(item)
+        return list_country_weather_data
