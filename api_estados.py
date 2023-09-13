@@ -11,6 +11,7 @@ class Country:
         self.__base = ""
         self.__country_id = ""
         self.get_states_api()
+        self.exists: bool
 
     def get_states_api(self):
         url = "https://www.universal-tutorial.com/api/getaccesstoken"
@@ -24,20 +25,28 @@ class Country:
                    'Accept': 'application/json'}
 
         response = requests.get(url, headers=headers).json()
+        exist = False
         for countries in response:
             if str(countries['country_name']) == self.__name:
                 self.__country['name'] = str(countries['country_name'])
                 self.__country['country_id'] = str(countries['country_short_name'])
                 self.__country_id = str(countries['country_short_name'])
+                exist = True
                 break
-        url = "https://www.universal-tutorial.com/api/states/" + self.__name
 
-        response = requests.get(url, headers=headers).json()
-        self.__states = []
-        for state in response:
-            self.__states.append(str(state['state_name']))
-        self.__country['states'] = self.__states
-        self.get_symbol()
+        if exist:
+            self.exists = True
+            url = "https://www.universal-tutorial.com/api/states/" + self.__name
+
+            response = requests.get(url, headers=headers).json()
+            self.__states = []
+            for state in response:
+                self.__states.append(str(state['state_name']))
+            self.__country['states'] = self.__states
+            self.get_symbol()
+        else:
+            self.exists = False
+            print('El pais que busca no existe...')
 
     def get_symbol(self):
         auxlist = []
@@ -61,31 +70,30 @@ class Country:
     def insert_weather(self, date):
         db = MongoDB()
         while date <= datetime.date.today():
-            cont = 0
             country_weather = {'_id': str(date) + self.__country_id + "-W", 'country_id': self.__country_id,
                                'state_weather': []}
-            for state in self.get_states():
-                url = "http://api.weatherapi.com/v1/history.json?key=c1c948ad023a40d78f263757231209&q=" + state + "&dt=" + str(
-                    date)
-                response = requests.get(url).json()
-                if 'error' not in response:
-                    weather_data = {'Min': str(response['forecast']['forecastday'][0]['day']['mintemp_c']),
-                                    'Max': str(response['forecast']['forecastday'][0]['day']['maxtemp_c']),
-                                    'Promedio': str(response['forecast']['forecastday'][0]['day']['avgtemp_c'])}
-                    country_weather['state_weather'].append({'state_name': state, 'weather_data': weather_data})
-                else:
-                    cont += 1
+            if db.get_country_weather_id(country_weather['_id']):
+                for state in self.get_states():
+                    url = "http://api.weatherapi.com/v1/history.json?key=c1c948ad023a40d78f263757231209&q=" + state + "&dt=" + str(
+                        date)
+                    response = requests.get(url).json()
+                    if 'error' not in response:
+                        weather_data = {'Min': str(response['forecast']['forecastday'][0]['day']['mintemp_c']),
+                                        'Max': str(response['forecast']['forecastday'][0]['day']['maxtemp_c']),
+                                        'Promedio': str(response['forecast']['forecastday'][0]['day']['avgtemp_c'])}
+                        country_weather['state_weather'].append({'state_name': state, 'weather_data': weather_data})
+                print(date)
+                db.insert_dataCW(country_weather)
+
             date += datetime.timedelta(days=1)
-            print(date)
-            db.insert_dataCW(country_weather)
 
     def insert_country_coin(self):
+        db = MongoDB()
         auxdate = str(datetime.date.today())
-        url = f"https://api.exchangerate.host/timeseries?start_date=2023-05-01&end_date={auxdate}&base={self.__base}&symbols=GTQ,USD,EUR"
+        url = f"https://api.exchangerate.host/timeseries?start_date=2023-01-01&end_date={auxdate}&base={self.__base}&symbols=GTQ,USD,EUR"
 
         response = requests.get(url).json()
         rates_data = response['rates']
-        db = MongoDB()
 
         for date, rates in rates_data.items():
             coin_value = {'_id': str(date) + self.__country_id + "-C", 'country_id': self.__country_id,

@@ -10,16 +10,19 @@ class MongoDB:
         self.__country_weather = self.__mydb["country_weather"]
 
     def insert_dataC(self, data: dict):
-        self.__country.insert_one(data)
-        print('Insertado con exito! ')
+        if self.__country.find_one({'name': data['name']}) is None:
+            self.__country.insert_one(data)
+            print('Insertado con exito! ')
 
     def insert_dataCC(self, data: dict):
-        self.__country_coin.insert_one(data)
-        print('Insertado con exito! ')
+        if self.__country_coin.find_one({'_id': data['_id']}) is None:
+            self.__country_coin.insert_one(data)
+            print('Insertado con exito! ')
 
     def insert_dataCW(self, data: dict):
-        self.__country_weather.insert_one(data)
-        print('Insertado con exito! ')
+        if self.__country_weather.find_one({'_id': data['_id']}) is None:
+            self.__country_weather.insert_one(data)
+            print('Insertado con exito! ')
 
     def query_dataC(self, key_value: dict):
         response = self.__country.find(key_value)
@@ -41,6 +44,7 @@ class MongoDB:
         #         print('LA BASE DE LA CONVERSION ES: ' + i['base'])
         #         print('LOS VALORES DE LA CONVERSION SON:')
         #         print(i['currencies_value'])
+
     def query_dataCW(self, key_value: dict):
         response = self.__country_weather.find(key_value)
         # if len(response['Items']) == 0:
@@ -51,5 +55,9 @@ class MongoDB:
         #             print(x['state_name'])
         #             print(x['weather_data'])
         #             print('--------------------------------')
+
     def get_country_id(self):
         return str(self.__country_id)
+
+    def get_country_weather_id(self, id_weather: str):
+        return self.__country_weather.find_one({'_id': id_weather}) is None
