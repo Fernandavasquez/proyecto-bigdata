@@ -1,7 +1,6 @@
 import pymongo
 import mysql.connector
 
-
 # Configurar la conexión a DynamoDB
 mongo = pymongo.MongoClient('mongodb://localhost:27017/')
 mongo_db = mongo['dbproyecto']
@@ -13,7 +12,7 @@ mongo_countryw = mongo_db['country_weather']
 conexion_mysql = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="Ferchis03",
+    password="Cralsive1620",
     database="dbProyecto"
 )
 

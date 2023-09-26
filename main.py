@@ -5,6 +5,7 @@ import time
 
 import mysqldb
 from chart import TimeChart
+from doubleline_chart import TimeDoubleChart
 from mongodb import MongoDB
 from dynamodb import DynamoDB
 
@@ -405,7 +406,7 @@ def main(page: Page):
                 aux1.append(coin_base)
                 country_coin = aux1
                 # query for the weather data.
-                country_weather = mysqldb.query_dataWeather(response[0])
+                #country_weather = mysqldb.query_dataWeather(response[0])
         elif database == 'MongoDB':
             response = mongo.query_data_c({'name': txt_pais.value})
             if response is not None:
@@ -655,12 +656,57 @@ def main(page: Page):
     def button_comparar_moneda(e):
         clean_selected_color()
 
+        opciones_mes = [
+            dropdown.Option("Enero"),
+            dropdown.Option("Febrero"),
+            dropdown.Option("Marzo"),
+            dropdown.Option("Abril"),
+            dropdown.Option("Mayo"),
+            dropdown.Option("Junio"),
+            dropdown.Option("Julio"),
+            dropdown.Option("Agosto"),
+            dropdown.Option("Septiembre"),
+        ]
+
         page.controls[0].controls[0].content.controls[0].content.controls[5].bgcolor = 'white24'
         page.controls[0].controls[0].content.controls[0].content.controls[5].content.controls[1].color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[5].content.controls[0].icon_color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[5].update()
-        chart_container.content = Text("CLICKED IN COMPARE COIN", color='white', weight='bold', size=18, animate_opacity=200)
+        chart_container.clean()
+        chart = TimeDoubleChart('Cambios de moneda por mes de DOLAR', country_coin, True)
+        chart_container.content = Column(
+            expand=True,
+            alignment='center',
+            horizontal_alignment='center',
+            controls=[
+                Container(
+                    expand=1,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=Row(
+                        alignment='center',
+                        controls=[
+                            chart.get_data_buttons(icons.ATTACH_MONEY, "Dolar", 'd1'),
+                            chart.get_data_buttons(icons.EURO_SYMBOL, "Euro", 'd2'),
+                            chart.get_data_buttons(icons.QUORA, "Quetzal", 'd3'),
+                            chart.get_data_buttons_dropdown('Seleccionar mes 1', opciones_mes, 'Septiembre', 'month1', 'green'),
+                            chart.get_data_buttons_dropdown('Seleccionar mes 2', opciones_mes, 'Septiembre', 'month2', 'red'),
+                        ]
+                    )
+                ),
+                Container(
+                    expand=4,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=chart,
+                    padding=20,
+                )
+            ]
+        )
         chart_container.update()
+        # run the method of get data points
+        time.sleep(1)
+        chart.get_data_points()
 
     def button_clima(e):
         clean_selected_color()
@@ -681,10 +727,10 @@ def main(page: Page):
             predetrminado = str(key)
             opciones_estados.append(dropdown.Option(str(key)))
 
-        page.controls[0].controls[0].content.controls[0].content.controls[4].bgcolor = 'white24'
-        page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[1].color = 'white'
-        page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[0].icon_color = 'white'
-        page.controls[0].controls[0].content.controls[0].content.controls[4].update()
+        page.controls[0].controls[0].content.controls[0].content.controls[6].bgcolor = 'white24'
+        page.controls[0].controls[0].content.controls[0].content.controls[6].content.controls[1].color = 'white'
+        page.controls[0].controls[0].content.controls[0].content.controls[6].content.controls[0].icon_color = 'white'
+        page.controls[0].controls[0].content.controls[0].content.controls[6].update()
         chart_container.clean()
         chart = TimeChart('Cambios de clima por mes y depertamento (MINIMO)', country_weather, False, predetrminado)
         chart_container.content = Column(
@@ -723,13 +769,66 @@ def main(page: Page):
 
     def button_comparar_clima(e):
         clean_selected_color()
+        opciones_mes = [
+            dropdown.Option("Enero"),
+            dropdown.Option("Febrero"),
+            dropdown.Option("Marzo"),
+            dropdown.Option("Abril"),
+            dropdown.Option("Mayo"),
+            dropdown.Option("Junio"),
+            dropdown.Option("Julio"),
+            dropdown.Option("Agosto"),
+            dropdown.Option("Septiembre"),
+        ]
+        opciones_estados = []
+        predetrminado: str = ''
+        for key in country_weather.keys():
+            predetrminado = str(key)
+            opciones_estados.append(dropdown.Option(str(key)))
 
         page.controls[0].controls[0].content.controls[0].content.controls[7].bgcolor = 'white24'
         page.controls[0].controls[0].content.controls[0].content.controls[7].content.controls[1].color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[7].content.controls[0].icon_color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[7].update()
-        chart_container.content = Text("CLICKED IN COMPARE WEATHER ", color='white', weight='bold', size=18, animate_opacity=200)
+        chart_container.clean()
+        chart = TimeDoubleChart('Cambios de clima por mes y depertamento (MINIMO)', country_weather, False, predetrminado)
+        chart_container.content = Column(
+            expand=True,
+            alignment='center',
+            horizontal_alignment='center',
+            controls=[
+                Container(
+                    expand=1,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=Row(
+                        alignment='center',
+                        controls=[
+                            chart.get_data_buttons_dropdown('Seleccionar estado', opciones_estados, predetrminado,
+                                                            'state', 'white'),
+                            chart.get_data_buttons(icons.SEVERE_COLD_SHARP, "Minimo", 'd1'),
+                            chart.get_data_buttons(icons.THERMOSTAT, "Promedio", 'd2'),
+                            chart.get_data_buttons(icons.WHATSHOT_SHARP, "Maximo", 'd3'),
+                            chart.get_data_buttons_dropdown('Seleccionar mes1', opciones_mes, 'Septiembre',
+                                                            'month1', 'green'),
+                            chart.get_data_buttons_dropdown('Seleccionar mes2', opciones_mes, 'Septiembre',
+                                                            'month2', 'red'),
+                        ]
+                    )
+                ),
+                Container(
+                    expand=4,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=chart,
+                    padding=20,
+                )
+            ]
+        )
         chart_container.update()
+        # run the method of get data points
+        time.sleep(1)
+        chart.get_data_points()
 
     def button_clima_moneda(e):
         clean_selected_color()
