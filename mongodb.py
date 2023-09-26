@@ -29,27 +29,29 @@ class MongoDB:
         response = self.__country.find_one(key_value)
         return response
 
+    def query_data_countrycoin(self, key_value: dict):
+        response_gtq = []
+        response_usd = []
+        response_eur = []
+        base = ''
+        for item in self.__country_coin.find(key_value):
+            response_gtq.append((item['_id'][:10], item['currencies_value']['GTQ']))
+            response_usd.append((item['_id'][:10], item['currencies_value']['USD']))
+            response_eur.append((item['_id'][:10], item['currencies_value']['EUR']))
+            base = item['base']
+        return response_usd, response_eur, response_gtq, base
 
-    def query_dataCC(self, key_value: dict):
-        response = self.__country_coin.find(key_value)
-        # if len(response['Items']) == 0:
-        #     print('El id de la moneda que busca no existe!')
-        # else:
-        #     for i in response['Items']:
-        #         print('LA BASE DE LA CONVERSION ES: ' + i['base'])
-        #         print('LOS VALORES DE LA CONVERSION SON:')
-        #         print(i['currencies_value'])
-
-    def query_dataCW(self, key_value: dict):
-        response = self.__country_weather.find(key_value)
-        # if len(response['Items']) == 0:
-        #     print('El id del clima que busca no existe!')
-        # else:
-        #     for i in response['Items']:
-        #         for x in i['state_weather']:
-        #             print(x['state_name'])
-        #             print(x['weather_data'])
-        #             print('--------------------------------')
+    def query_data_countryweather(self, key_value: dict):
+        response = {}
+        aux = self.__country_weather.find_one(key_value)
+        for item in aux['state_weather']:
+            response[str(item['state_name'])] = [[], [], []]
+        for item in self.__country_weather.find(key_value):
+            for state in item['state_weather']:
+                response[state['state_name']][0].append((item['_id'][:10], state['weather_data']['Min']))
+                response[state['state_name']][1].append((item['_id'][:10], state['weather_data']['Promedio']))
+                response[state['state_name']][2].append((item['_id'][:10], state['weather_data']['Max']))
+        return response
 
     def get_information_data(self):
         data = self.__country.find()

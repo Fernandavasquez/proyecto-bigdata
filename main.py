@@ -317,11 +317,15 @@ def main(page: Page):
                         items.content.controls[0].opacity = 1
                         items.content.update()
 
+
     txt_pais = TextField(
-        border_radius=6,
         label="Buscar pais",
-        border=InputBorder.NONE,
-        filled=True,
+        text_size=20,
+        text_style=TextStyle(
+            color='White'
+        ),
+        border=InputBorder.UNDERLINE,
+        border_color=colors.GREEN_ACCENT,
         hint_text="Ingrese el pais.",
     )
 
@@ -370,15 +374,38 @@ def main(page: Page):
         text_align=TextAlign.CENTER,
     )
 
+    text_capital = Text(
+        width=250,
+        height=180,
+        size=40,
+        color='white',
+        weight='bold',
+        text_align=TextAlign.CENTER,
+    )
+
     def submit_textfield_pais(e):
+        global country_weather
+        global country_coin
         if database == 'MySQL':
             pass
         elif database == 'MongoDB':
             response = mongo.query_data_c({'name': txt_pais.value})
-            print(response)
-            text_states.value = str(len(response['states']))
-            text_currencies.value = str(response['currencies'][0])
-            text_shortname.value = str(response['country_id'])
+            if response is not None:
+                text_states.value = str(len(response['states']))
+                text_currencies.value = str(response['currencies'][0])
+                text_shortname.value = str(response['country_id'])
+                text_capital.value = str(response['capital']).upper()
+                # query for the coin data
+                aux = []
+                coin_gtq, coin_usd, coin_eur, coin_base = mongo.query_data_countrycoin({'country_id': response['country_id']})
+                aux.append(coin_gtq)
+                aux.append(coin_usd)
+                aux.append(coin_eur)
+                aux.append(coin_base)
+                country_coin = aux
+                # query for the weather data.
+                country_weather = mongo.query_data_countryweather({'country_id': response['country_id']})
+
         elif database == 'DynamoDB':
             pass
 
@@ -426,7 +453,11 @@ def main(page: Page):
                         controls=[
                             txt_pais,
                             ElevatedButton(
-                                text="Submit",
+                                color=colors.GREEN_ACCENT,
+                                bgcolor='white10',
+                                icon=icons.SEARCH,
+                                icon_color=colors.GREEN_ACCENT,
+                                text="Buscar",
                                 on_click=lambda es: submit_textfield_pais(es),
                                 ),
                         ]
@@ -443,7 +474,10 @@ def main(page: Page):
                             bgcolor=colors.with_opacity(0.05, colors.WHITE10),
                             content=Column(
                                 controls=[
-                                    Text('ESTADOS', color='white', size=24),
+                                    Text('ESTADOS:',
+                                         color=colors.GREEN_ACCENT,
+                                         weight='bold',
+                                         size=24),
                                     text_states,
                                 ]
                             ),
@@ -457,7 +491,10 @@ def main(page: Page):
                             bgcolor=colors.with_opacity(0.05, colors.WHITE10),
                             content=Column(
                                 controls=[
-                                    Text('DATOS TOTALES DE MONEDA', color='white', size=24),
+                                    Text('DATOS TOTALES SOBRE MONEDA:',
+                                         color=colors.GREEN_ACCENT,
+                                         weight='bold',
+                                         size=24),
                                     text_datacoin,
                                 ]
                             ),
@@ -471,7 +508,10 @@ def main(page: Page):
                             bgcolor=colors.with_opacity(0.05, colors.WHITE10),
                             content=Column(
                                 controls=[
-                                    Text('DATOS TOTALES SOBRE CLIMA', color='white', size=24),
+                                    Text('DATOS TOTALES SOBRE CLIMA:',
+                                         color=colors.GREEN_ACCENT,
+                                         weight='bold',
+                                         size=24),
                                     text_dataweather,
                                 ]
                             ),
@@ -490,7 +530,10 @@ def main(page: Page):
                             bgcolor=colors.with_opacity(0.05, colors.WHITE10),
                             content=Column(
                                 controls=[
-                                    Text('ABREVIATURA', color='white', size=24),
+                                    Text('ABREVIATURA:',
+                                         color=colors.GREEN_ACCENT,
+                                         weight='bold',
+                                         size=24),
                                     text_shortname,
                                 ]
                             ),
@@ -504,7 +547,10 @@ def main(page: Page):
                             bgcolor=colors.with_opacity(0.05, colors.WHITE10),
                             content=Column(
                                 controls=[
-                                    Text('SIMBOLO DE MONEDA', color='white', size=24),
+                                    Text('SIMBOLO DE MONEDA:',
+                                         color=colors.GREEN_ACCENT,
+                                         weight='bold',
+                                         size=24),
                                     text_currencies,
                                 ]
                             ),
@@ -518,8 +564,11 @@ def main(page: Page):
                             bgcolor=colors.with_opacity(0.05, colors.WHITE10),
                             content=Column(
                                 controls=[
-                                    Text('DATO RANDOM', color='white', size=24),
-
+                                    Text('CAPITAL:',
+                                         color=colors.GREEN_ACCENT,
+                                         weight='bold',
+                                         size=24),
+                                    text_capital,
                                 ]
                             ),
                             padding=20,
@@ -531,17 +580,27 @@ def main(page: Page):
         page.update()
         chart_container.update()
 
-
-
     def button_moneda(e):
         clean_selected_color()
+
+        opciones_mes = [
+            dropdown.Option("Enero"),
+            dropdown.Option("Febrero"),
+            dropdown.Option("Marzo"),
+            dropdown.Option("Abril"),
+            dropdown.Option("Mayo"),
+            dropdown.Option("Junio"),
+            dropdown.Option("Julio"),
+            dropdown.Option("Agosto"),
+            dropdown.Option("Septiembre"),
+        ]
 
         page.controls[0].controls[0].content.controls[0].content.controls[4].bgcolor = 'white24'
         page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[1].color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[0].icon_color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[4].update()
         chart_container.clean()
-        chart = TimeChart()
+        chart = TimeChart('Cambios de moneda por mes de DOLAR', country_coin, True)
         chart_container.content = Column(
             expand=True,
             alignment='center',
@@ -554,9 +613,10 @@ def main(page: Page):
                     content=Row(
                         alignment='center',
                         controls=[
-                            chart.get_data_buttons(icons.ATTACH_MONEY, "Dolar", 'gold'),
-                            chart.get_data_buttons(icons.EURO_SYMBOL, "Euro", 'btc'),
-                            chart.get_data_buttons(icons.QUORA, "Quetzal", 'btc'),
+                            chart.get_data_buttons(icons.ATTACH_MONEY, "Dolar", 'd1'),
+                            chart.get_data_buttons(icons.EURO_SYMBOL, "Euro", 'd2'),
+                            chart.get_data_buttons(icons.QUORA, "Quetzal", 'd3'),
+                            chart.get_data_buttons_dropdown('Seleccionar mes', opciones_mes, 'Septiembre', 'month'),
                         ]
                     )
                 ),
@@ -586,13 +646,62 @@ def main(page: Page):
 
     def button_clima(e):
         clean_selected_color()
+        opciones_mes = [
+                dropdown.Option("Enero"),
+                dropdown.Option("Febrero"),
+                dropdown.Option("Marzo"),
+                dropdown.Option("Abril"),
+                dropdown.Option("Mayo"),
+                dropdown.Option("Junio"),
+                dropdown.Option("Julio"),
+                dropdown.Option("Agosto"),
+                dropdown.Option("Septiembre"),
+            ]
+        opciones_estados = []
+        predetrminado: str = ''
+        for key in country_weather.keys():
+            predetrminado = str(key)
+            opciones_estados.append(dropdown.Option(str(key)))
 
-        page.controls[0].controls[0].content.controls[0].content.controls[6].bgcolor = 'white24'
-        page.controls[0].controls[0].content.controls[0].content.controls[6].content.controls[1].color = 'white'
-        page.controls[0].controls[0].content.controls[0].content.controls[6].content.controls[0].icon_color = 'white'
-        page.controls[0].controls[0].content.controls[0].content.controls[6].update()
-        chart_container.content = Text("CLICKED IN WEATHER", color='white', weight='bold', size=18, animate_opacity=200)
+        page.controls[0].controls[0].content.controls[0].content.controls[4].bgcolor = 'white24'
+        page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[1].color = 'white'
+        page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[0].icon_color = 'white'
+        page.controls[0].controls[0].content.controls[0].content.controls[4].update()
+        chart_container.clean()
+        chart = TimeChart('Cambios de clima por mes y depertamento (MINIMO)', country_weather, False, predetrminado)
+        chart_container.content = Column(
+            expand=True,
+            alignment='center',
+            horizontal_alignment='center',
+            controls=[
+                Container(
+                    expand=1,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=Row(
+                        alignment='center',
+                        controls=[
+                            chart.get_data_buttons_dropdown('Seleccionar estado', opciones_estados, predetrminado, 'state'),
+                            chart.get_data_buttons(icons.SEVERE_COLD_SHARP, "Minimo", 'd1'),
+                            chart.get_data_buttons(icons.THERMOSTAT, "Promedio", 'd2'),
+                            chart.get_data_buttons(icons.WHATSHOT_SHARP, "Maximo", 'd3'),
+                            chart.get_data_buttons_dropdown('Seleccionar mes', opciones_mes, 'Septiembre', 'month'),
+                        ]
+                    )
+                ),
+                Container(
+                    expand=4,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=chart,
+                    padding=20,
+                )
+            ]
+        )
         chart_container.update()
+        # run the method of get data points
+        time.sleep(1)
+        chart.get_data_points()
 
     def button_comparar_clima(e):
         clean_selected_color()

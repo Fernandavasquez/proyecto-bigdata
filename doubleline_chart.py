@@ -5,25 +5,31 @@ from decimal import *
 # now for the main class for the charts
 
 
-class TimeChart(ft.UserControl):
-    def __init__(self, vtext: str, data: list | dict, coin: bool, predeterminado: str | None = None):
+class TimeDoubleChart(ft.UserControl):
+    def __init__(self, vtext: str, data1: list | dict, coin: bool, predeterminado: str | None = None):
         # instances for the chart
         self.coin = coin
         self.actual_month = 'Septiembre'
-        if isinstance(data, list):
-            self.country_data = data
+        if isinstance(data1, list):
+            self.country_data = data1
             self.dic_data = None
         else:
-            self.dic_data = data
+            self.dic_data = data1
             self.get_data_points_state(predeterminado)
+
         self.data_points_1: list = []
         self.data_points_2: list = []
         self.data_points_3: list = []
+
+        self.data_points2_1: list = []
+        self.data_points2_2: list = []
+        self.data_points2_3: list = []
         # metodo que estructura las listas bien
         self.get_data_points_month(self.actual_month)
+        self.get_data_points_month2('Enero')
         # some instances
         self.data_points: list = []
-        self.points: list = self.data_points_1  # start off with the gold prices frist
+        self.points: list = self.data_points_1 + self.data_points2_1  # start off with the gold prices frist
         # text instance
         self.text = ft.Text(
                     vtext,
@@ -52,18 +58,30 @@ class TimeChart(ft.UserControl):
             ),
         )
         # the properties of the line/curve
-        self.line_chart: ft.Control = ft.LineChartData(
-            color=ft.colors.GREEN,
-            stroke_width=2,
-            curved=True,
-            stroke_cap_round=True,
-            below_line_gradient=ft.LinearGradient(
-                begin=ft.alignment.top_center,
-                end=ft.alignment.bottom_center,
-                colors=[ft.colors.with_opacity(0.25, ft.colors.GREEN), "transparent"],
-
-            )
-        )
+        self.line_chart = [
+            ft.LineChartData(
+                color=ft.colors.GREEN,
+                stroke_width=2,
+                curved=True,
+                stroke_cap_round=True,
+                below_line_gradient=ft.LinearGradient(
+                    begin=ft.alignment.top_center,
+                    end=ft.alignment.bottom_center,
+                    colors=[ft.colors.with_opacity(0.25, ft.colors.GREEN), "transparent"],
+                    )
+                ),
+            ft.LineChartData(
+                color=ft.colors.RED,
+                stroke_width=2,
+                curved=True,
+                stroke_cap_round=True,
+                below_line_gradient=ft.LinearGradient(
+                    begin=ft.alignment.top_center,
+                    end=ft.alignment.bottom_center,
+                    colors=[ft.colors.with_opacity(0.25, ft.colors.RED), "transparent"],
+                )
+            ),
+        ]
 
         super().__init__()
     # we need two buttons to toggle between the two data sets
@@ -107,6 +125,7 @@ class TimeChart(ft.UserControl):
         self.data_points_1 = []
         self.data_points_2 = []
         self.data_points_3 = []
+
         for item in self.country_data[0]:
             date_month = datetime.strptime(item[0], '%Y-%m-%d')
             if date_month.month == mes:
@@ -119,6 +138,45 @@ class TimeChart(ft.UserControl):
             date_month = datetime.strptime(item[0], '%Y-%m-%d')
             if date_month.month == mes:
                 self.data_points_3.append((date_month.day, float(item[1])))
+
+    def get_data_points_month2(self, month: str):
+        self.actual_month = month
+        mes = 0
+        match month:
+            case 'Enero':
+                mes = 1
+            case 'Febrero':
+                mes = 2
+            case 'Marzo':
+                mes = 3
+            case 'Abril':
+                mes = 4
+            case 'Mayo':
+                mes = 5
+            case 'Junio':
+                mes = 6
+            case 'Julio':
+                mes = 7
+            case 'Agosto':
+                mes = 8
+            case 'Septiembre':
+                mes = 9
+        self.data_points2_1 = []
+        self.data_points2_2 = []
+        self.data_points2_3 = []
+
+        for item in self.country_data[0]:
+            date_month = datetime.strptime(item[0], '%Y-%m-%d')
+            if date_month.month == mes:
+                self.data_points2_1.append((date_month.day, float(item[1])))
+        for item in self.country_data[1]:
+            date_month = datetime.strptime(item[0], '%Y-%m-%d')
+            if date_month.month == mes:
+                self.data_points2_2.append((date_month.day, float(item[1])))
+        for item in self.country_data[2]:
+            date_month = datetime.strptime(item[0], '%Y-%m-%d')
+            if date_month.month == mes:
+                self.data_points2_3.append((date_month.day, float(item[1])))
 
     def toggle_dropdown(self, e):
         if e.control.data == 'month':
