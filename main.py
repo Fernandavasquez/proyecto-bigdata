@@ -7,6 +7,7 @@ import mysqldb
 from chart import TimeChart
 from doubleline_chart import TimeDoubleChart
 from mongodb import MongoDB
+from matplotchart import TimeMatPlotChart
 from dynamodb import DynamoDB
 
 
@@ -227,6 +228,7 @@ class ModernNavBar(UserControl):
 
 def main(page: Page):
     mongo = MongoDB()
+    dynamo = DynamoDB()
     # title
     page.title = 'Flet Modern Sidebar'
     # page width and height
@@ -349,7 +351,6 @@ def main(page: Page):
         text_align=TextAlign.CENTER,
     )
     text_datacoin = Text(
-        value='167',
         width=250,
         height=180,
         size=75,
@@ -359,7 +360,6 @@ def main(page: Page):
     )
 
     text_dataweather = Text(
-        value='167',
         width=250,
         height=180,
         size=75,
@@ -389,9 +389,9 @@ def main(page: Page):
     def submit_textfield_pais(e):
         global country_weather
         global country_coin
+        global country_weather_matplot
         if database == 'MySQL':
             response = mysqldb.query_MysqlCountry(txt_pais.value)
-            print(response[0][1])
             if response is not None:
                 text_states.value = str(mysqldb.query_dataestados(response[0][1]))
                 text_currencies.value = str(response[0][2])
@@ -405,8 +405,12 @@ def main(page: Page):
                 aux1.append(coin_eur)
                 aux1.append(coin_base)
                 country_coin = aux1
+                text_dataweather.value = str(len(coin_gtq))
+                text_datacoin.value = str(len(coin_gtq))
                 # query for the weather data.
-                #country_weather = mysqldb.query_dataWeather(response[0])
+                country_weather = mysqldb.query_dataweather(response[0][1])
+                country_weather_matplot = mysqldb.query_dataweather_matplotlib(response[0][1])
+                print(country_weather_matplot[0])
         elif database == 'MongoDB':
             response = mongo.query_data_c({'name': txt_pais.value})
             if response is not None:
@@ -423,11 +427,34 @@ def main(page: Page):
                 aux.append(coin_base)
                 country_coin = aux
 
+                text_dataweather.value = str(len(coin_gtq))
+                text_datacoin.value = str(len(coin_gtq))
                 country_weather = mongo.query_data_countryweather({'country_id': response['country_id']})
-
+                country_weather_matplot = mongo.query_data_countryweather_matplotlib({'country_id': response['country_id']})
+                print(country_weather_matplot[0])
         elif database == 'DynamoDB':
-            pass
+            response = dynamo.query_data_country(txt_pais.value)
+            if response != 0:
+                text_states.value = str(len(response['states']))
+                text_currencies.value = str(response['currencies'][0])
+                text_shortname.value = str(response['country_id'])
+                text_capital.value = str(response['capital']).upper()
 
+                # query for coin
+                aux = []
+                coin_gtq, coin_usd, coin_eur, coin_base = dynamo.query_data_country_coin(response['country_id'])
+                aux.append(coin_gtq)
+                aux.append(coin_usd)
+                aux.append(coin_eur)
+                aux.append(coin_base)
+                country_coin = aux
+
+                text_dataweather.value = str(len(coin_gtq))
+                text_datacoin.value = str(len(coin_gtq))
+
+                # query for weather
+                country_weather, country_weather_matplot = dynamo.query_data_country_weather(response['country_id'])
+                print(country_weather_matplot[0])
         page.update()
 
     chart_container = Container(
@@ -837,8 +864,39 @@ def main(page: Page):
         page.controls[0].controls[0].content.controls[0].content.controls[8].content.controls[1].color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[8].content.controls[0].icon_color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[8].update()
-        chart_container.content = Text("CLICKED IN WEATHER-COIN", color='white', weight='bold', size=18, animate_opacity=200)
+        #chart_container.content = Text("CLICKED IN WEATHER-COIN", color='white', weight='bold', size=18, animate_opacity=200)
+
+        chart = TimeMatPlotChart(country_coin, country_weather_matplot)
+        chart_container.content = Column(
+            expand=True,
+            alignment='center',
+            horizontal_alignment='center',
+            controls=[
+                Container(
+                    expand=1,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=Row(
+                        alignment='center',
+                        controls=[
+                            chart.get_data_buttons(icons.ATTACH_MONEY, "Dolar", 'd1'),
+                            chart.get_data_buttons(icons.EURO_SYMBOL, "Euro", 'd2'),
+                            chart.get_data_buttons(icons.QUORA, "Quetzal", 'd3'),
+                        ]
+                    )
+                ),
+                Container(
+                    expand=4,
+                    border_radius=6,
+                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                    content=chart,
+                    padding=20,
+                )
+            ]
+        )
         chart_container.update()
+        # run the method of get data points
+        time.sleep(1)
 
     def button_analisis(e):
         clean_selected_color()

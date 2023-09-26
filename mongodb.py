@@ -53,6 +53,9 @@ class MongoDB:
                 response[state['state_name']][2].append((item['_id'][:10], state['weather_data']['Max']))
         return response
 
+    def query_data_countryweather_matplotlib(self, key_value: dict):
+        return list(self.__country_weather.find(key_value))
+
     def get_information_data(self):
         data = self.__country.find()
         countries = []

@@ -1,5 +1,7 @@
 import pymongo
 import mysql.connector
+import datetime
+
 
 # Configurar la conexión a DynamoDB
 mongo = pymongo.MongoClient('mongodb://localhost:27017/')
@@ -145,21 +147,55 @@ def query_dataestados(busqueda):
     return resultados[0][0]
 
 
-
-def query_dataWeather(busqueda):
-    consulta = "SELECT * FROM tblweather WHERE tblcountry_country_id = %s"
+def query_dataweather(busqueda):
+    consulta = "SELECT * FROM tblcountry_weather WHERE tblcountry_country_id = %s LIMIT 1"
     valor_a_buscar = busqueda
     cursor_mysql.execute(consulta, (valor_a_buscar,))
     # Obtiene los resultados
     resultados = cursor_mysql.fetchall()
+
+    consulta = "SELECT * FROM tblweather WHERE tblcountry_weather_id = %s"
+    cursor_mysql.execute(consulta, (resultados[0][0],))
+    resultados = cursor_mysql.fetchall()
+
+    aux = []
     response = {}
-    for item in resultados['state_weather']:
-        response[str(item['state_name'])] = [[], [], []]
-        print(item)
     for item in resultados:
-        for state in item['state_weather']:
-            response[state['state_name']][0].append((item['_id'][:10], state['weather_data']['Min']))
-            response[state['state_name']][1].append((item['_id'][:10], state['weather_data']['Promedio']))
-            response[state['state_name']][2].append((item['_id'][:10], state['weather_data']['Max']))
+        aux.append(str(item[1]))
+        response[str(item[1])] = [[], [], []]
+    for state in aux:
+        consulta = "SELECT * FROM tblweather WHERE state_name = %s"
+        cursor_mysql.execute(consulta, (state,))
+        resultados = cursor_mysql.fetchall()
+        for item in resultados:
+            response[state][0].append((item[5][:10], item[2]))
+            response[state][1].append((item[5][:10], item[4]))
+            response[state][2].append((item[5][:10], item[3]))
     return response
 
+
+def query_dataweather_matplotlib(country_id: str):
+    data_matplotlib = []
+    date = datetime.date(2023, 1, 1)
+    date_end = datetime.date(2023, 9, 26)
+    while date <= date_end:
+        response_end = {}
+        value = str(date) + country_id + '-W'
+        consulta = "SELECT * FROM tblweather WHERE tblcountry_weather_id = %s"
+        cursor_mysql.execute(consulta, (value,))
+        resultados = cursor_mysql.fetchall()
+        response_end['_id'] = value
+        response_end['country_id'] = country_id
+        response_end['state_weather'] = []
+        for state in resultados:
+            aux = {}
+            aux['state_name'] = state[1]
+            aux['weather_data'] = {
+                'Min': state[3],
+                'Max': state[2],
+                'Promedio': state[4]
+            }
+            response_end['state_weather'].append(aux)
+        data_matplotlib.append(response_end)
+        date += datetime.timedelta(days=1)
+    return data_matplotlib
