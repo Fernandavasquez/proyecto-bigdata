@@ -13,7 +13,7 @@ mongo_countryw = mongo_db['country_weather']
 conexion_mysql = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="Ferchis03",
+    password="1433",
     database="dbProyecto"
 )
 
@@ -26,7 +26,7 @@ def extraer_datos_de_mongoCountry():
     datos_mongodb_states = []
     mongo_dataC = mongo_country.find()
     for item in mongo_dataC:
-        datos_mongodb.append((item['name'], item['country_id'], item['currencies'][0]))
+        datos_mongodb.append((item['name'], item['country_id'], item['currencies'][0], item['capital']))
         for item2 in item['states']:
             datos_mongodb_states.append((item2, item['country_id']))
     return datos_mongodb, datos_mongodb_states
@@ -55,7 +55,7 @@ def extraer_datos_de_mongodbWeather():
 
 # Función para insertar datos en MySQL
 def insertar_datos_en_mysqlCountry(conexion_mysql, datos):
-    insert_query = "INSERT INTO tblcountry (name, country_id, base) VALUES (%s, %s, %s)"
+    insert_query = "INSERT INTO tblcountry (name, country_id, base, capital) VALUES (%s, %s, %s, %s)"
 
     try:
         cursor_mysql.executemany(insert_query, datos)

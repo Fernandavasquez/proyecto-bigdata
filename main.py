@@ -19,13 +19,14 @@ while not exitw:
             datos_mongodb_coin = db.extraer_datos_de_mongodbCoin()
             datos_mongodb_cweather, datos_mongodb_weather = db.extraer_datos_de_mongodbWeather()
 
-
+            print(datos_mongodb_coin)
             # Insertar los datos en MySQL
-            db.insertar_datos_en_mysqlCountry(db.conexion_mysql, datos_mongodb_country)
-            db.insertar_datos_en_mysqlStates(db.conexion_mysql, datos_mongodb_states)
-            db.insertar_datos_en_mysqlCoin(db.conexion_mysql, datos_mongodb_coin)
-            db.insertar_datos_en_mysqlCWeather(db.conexion_mysql, datos_mongodb_cweather)
-            db.insertar_datos_en_mysqlWeather(db.conexion_mysql, datos_mongodb_weather)
+            #db.insertar_datos_en_mysqlCountry(db.conexion_mysql, datos_mongodb_country)
+            #db.insertar_datos_en_mysqlStates(db.conexion_mysql, datos_mongodb_states)
+            #db.insertar_datos_en_mysqlCoin(db.conexion_mysql, datos_mongodb_coin)
+
+            #db.insertar_datos_en_mysqlCWeather(db.conexion_mysql, datos_mongodb_cweather)
+            #db.insertar_datos_en_mysqlWeather(db.conexion_mysql, datos_mongodb_weather)
         case '2':
 
             print('Table Country Query')
