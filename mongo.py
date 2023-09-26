@@ -1,5 +1,6 @@
 import pymongo
 
+
 class MongoDB:
     def __init__(self):
         self.__myclient = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -55,6 +56,14 @@ class MongoDB:
         #             print(x['state_name'])
         #             print(x['weather_data'])
         #             print('--------------------------------')
+
+    def get_information_data(self):
+        data = self.__country.find()
+        countries = []
+        for country in data:
+            countries.append(country)
+        return countries
+
 
     def get_country_id(self):
         return str(self.__country_id)

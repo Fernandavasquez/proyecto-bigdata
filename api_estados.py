@@ -4,13 +4,13 @@ from mongo import MongoDB
 
 
 class Country:
-    def __init__(self, name: str):
+    def __init__(self, name: str, states: list[str], base: str, countryid: str):
         self.__name = name
-        self.__states: list[str] = []
+        self.__states: list[str] = states
         self.__country = {}
-        self.__base = ""
-        self.__country_id = ""
-        self.get_states_api()
+        self.__base = base
+        self.__country_id = countryid
+        # self.get_states_api()
         self.exists: bool
 
     def get_states_api(self):
@@ -27,7 +27,8 @@ class Country:
         response = requests.get(url, headers=headers).json()
         exist = False
         for countries in response:
-            if str(countries['country_name']) == self.__name:
+            if (str(countries['country_name']) == self.__name)\
+                    or str(countries['country_name']) == self.__name + ' The':
                 self.__country['name'] = str(countries['country_name'])
                 self.__country['country_id'] = str(countries['country_short_name'])
                 self.__country_id = str(countries['country_short_name'])
@@ -36,7 +37,7 @@ class Country:
 
         if exist:
             self.exists = True
-            url = "https://www.universal-tutorial.com/api/states/" + self.__name
+            url = "https://www.universal-tutorial.com/api/states/" + self.__country['name']
 
             response = requests.get(url, headers=headers).json()
             self.__states = []

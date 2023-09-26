@@ -1,38 +1,48 @@
 import datetime
-from dynamodb import DynamoDB
+from mongo import MongoDB
 from api_estados import Country
 
 exitw = False
-print('-------------------------------------------')
-print('Inserte Nombre del Pais')
-pais = input("Ingrese un pais: ")
-
-new_country = Country(pais)
-
-if new_country.exists:
-    while not exitw:
-        print('-------------------------------------------')
-        print('1. Insertar Pais')
-        print('2. Insertar cambios de Moneda')
-        print('3. Insertar cambios de Clima')
-        print('4. SALIR')
-        option = input('Ingrese una opcion: ')
-
-        match option:
-            case '1':
-                new_country.insert_country_data()
-            case '2':
-                new_country.insert_country_coin()
-            case '3':
-                # print('Ingrese la fecha de inico para obtener los datos YYYY-mm-dd:')
-                # year = int(input('Ingrese el año: '))
-                # month = int(input('Ingrese el mes: '))
-                # day = int(input('Ingrese el dia: '))
-                date = datetime.date(2023, 1, 1)
-                new_country.insert_weather(date)
-
-            case '4':
-                exitw = True
-
-        print('-----------------------------------------------------------')
-
+# print('-------------------------------------------')
+# print('Inserte Nombre del Pais')
+# pais = input("Ingrese un pais: ")
+#
+# new_country = Country(pais)
+print('Information data')
+db = MongoDB()
+for country in db.get_information_data():
+    print(country['name'])
+    print('Country coin')
+    new_country = Country(country['name'], country['states'], country['currencies'][0], country['country_id'])
+    new_country.insert_country_coin()
+    print('Country weather')
+    date = datetime.date(2023, 1, 1)
+    new_country.insert_weather(date)
+# if new_country.exists:
+#     while not exitw:
+#         print('-------------------------------------------')
+#         print('1. Insertar Pais')
+#         print('2. Insertar cambios de Moneda')
+#         print('3. Insertar cambios de Clima')
+#         print('4. Verificar datos')
+#         print('5. SALIR')
+#         option = input('Ingrese una opcion: ')
+#
+#         match option:
+#             case '1':
+#                 new_country.insert_country_data()
+#             case '2':
+#                 new_country.insert_country_coin()
+#             case '3':
+#                 # print('Ingrese la fecha de inico para obtener los datos YYYY-mm-dd:')
+#                 # year = int(input('Ingrese el año: '))
+#                 # month = int(input('Ingrese el mes: '))
+#                 # day = int(input('Ingrese el dia: '))
+#                 date = datetime.date(2023, 1, 1)
+#                 new_country.insert_weather(date)
+#             case '4':
+#
+#             case '5':
+#                 exitw = True
+#
+#         print('-----------------------------------------------------------')
