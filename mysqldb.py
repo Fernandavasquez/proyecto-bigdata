@@ -107,7 +107,7 @@ def insertar_datos_en_mysqlWeather(conexion_mysql, datos):
         print(f"Error al insertar datos en MySQL: {err}")
 
 
-def query_MysqlCountry(busqueda):
+def query_MysqlCountry(busqueda: str):
     consulta = "SELECT * FROM tblcountry WHERE name = %s"
     valor_a_buscar = busqueda
 
@@ -115,25 +115,52 @@ def query_MysqlCountry(busqueda):
 
     # Obtiene los resultados
     resultados = cursor_mysql.fetchall()
-
-    # Itera a través de los resultados
-    for fila in resultados:
-        # Accede a las columnas de la fila como fila[0], fila[1], etc.
-        print(fila)
+    return resultados
 
 def query_dataCC(busqueda):
-    consulta = "SELECT * FROM tblcountrycoin WHERE id_coin = %s"
+    consulta = "SELECT * FROM tblcountrycoin WHERE tblcountry_country_id = %s"
+    valor_a_buscar = busqueda
+    cursor_mysql.execute(consulta, (valor_a_buscar,))
+    # Obtiene los resultados
+    resultados = cursor_mysql.fetchall()
+    response_gtq = []
+    response_usd = []
+    response_eur = []
+    base = ''
+    for item in resultados:
+       # print(item)
+        response_gtq.append((item[0][:10], item[2]))
+        response_usd.append((item[0][:10], item[3]))
+        response_eur.append((item[0][:10], item[4]))
+        base = item[5]
+
+    return response_usd, response_eur, response_gtq, base
+def query_dataestados(busqueda):
+    consulta = "SELECT COUNT(id) FROM tblestados WHERE tblcountry_country_id = %s"
     valor_a_buscar = busqueda
 
     cursor_mysql.execute(consulta, (valor_a_buscar,))
 
     # Obtiene los resultados
     resultados = cursor_mysql.fetchall()
+    return resultados[0][0]
 
-    if len(resultados['Items']):
-        print('El id de la moneda que busca no existe!')
-    else:
-        for i in resultados['Items']:
-            print('LA BASE DE LA CONVERSION ES: ' + i['base'])
-            print('LOS VALORES DE LA CONVERSION SON:')
-            print(i['currencies_value'])
+
+
+def query_dataWeather(busqueda):
+    consulta = "SELECT * FROM tblweather WHERE tblcountry_country_id = %s"
+    valor_a_buscar = busqueda
+    cursor_mysql.execute(consulta, (valor_a_buscar,))
+    # Obtiene los resultados
+    resultados = cursor_mysql.fetchall()
+    response = {}
+    for item in resultados['state_weather']:
+        response[str(item['state_name'])] = [[], [], []]
+        print(item)
+    for item in resultados:
+        for state in item['state_weather']:
+            response[state['state_name']][0].append((item['_id'][:10], state['weather_data']['Min']))
+            response[state['state_name']][1].append((item['_id'][:10], state['weather_data']['Promedio']))
+            response[state['state_name']][2].append((item['_id'][:10], state['weather_data']['Max']))
+    return response
+

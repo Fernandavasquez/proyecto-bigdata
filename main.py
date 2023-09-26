@@ -2,6 +2,8 @@ import flet
 from flet import *
 from functools import partial
 import time
+
+import mysqldb
 from chart import TimeChart
 from mongodb import MongoDB
 from dynamodb import DynamoDB
@@ -387,7 +389,23 @@ def main(page: Page):
         global country_weather
         global country_coin
         if database == 'MySQL':
-            pass
+            response = mysqldb.query_MysqlCountry(txt_pais.value)
+            print(response[0][1])
+            if response is not None:
+                text_states.value = str(mysqldb.query_dataestados(response[0][1]))
+                text_currencies.value = str(response[0][2])
+                text_shortname.value = str(response[0][1])
+                text_capital.value = str(response[0][3]).upper()
+                #query for the coin data
+                aux1 = []
+                coin_gtq, coin_usd, coin_eur, coin_base = mysqldb.query_dataCC(response[0][1])
+                aux1.append(coin_gtq)
+                aux1.append(coin_usd)
+                aux1.append(coin_eur)
+                aux1.append(coin_base)
+                country_coin = aux1
+                # query for the weather data.
+                country_weather = mysqldb.query_dataWeather(response[0])
         elif database == 'MongoDB':
             response = mongo.query_data_c({'name': txt_pais.value})
             if response is not None:
@@ -395,7 +413,7 @@ def main(page: Page):
                 text_currencies.value = str(response['currencies'][0])
                 text_shortname.value = str(response['country_id'])
                 text_capital.value = str(response['capital']).upper()
-                # query for the coin data
+
                 aux = []
                 coin_gtq, coin_usd, coin_eur, coin_base = mongo.query_data_countrycoin({'country_id': response['country_id']})
                 aux.append(coin_gtq)
@@ -403,7 +421,7 @@ def main(page: Page):
                 aux.append(coin_eur)
                 aux.append(coin_base)
                 country_coin = aux
-                # query for the weather data.
+
                 country_weather = mongo.query_data_countryweather({'country_id': response['country_id']})
 
         elif database == 'DynamoDB':
