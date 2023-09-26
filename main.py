@@ -3,6 +3,8 @@ from flet import *
 from functools import partial
 import time
 from chart import TimeChart
+from mongodb import MongoDB
+from dynamodb import DynamoDB
 
 
 class ModernNavBar(UserControl):
@@ -221,6 +223,7 @@ class ModernNavBar(UserControl):
 
 
 def main(page: Page):
+    mongo = MongoDB()
     # title
     page.title = 'Flet Modern Sidebar'
     # page width and height
@@ -314,8 +317,72 @@ def main(page: Page):
                         items.content.controls[0].opacity = 1
                         items.content.update()
 
+    txt_pais = TextField(
+        border_radius=6,
+        label="Buscar pais",
+        border=InputBorder.NONE,
+        filled=True,
+        hint_text="Ingrese el pais.",
+    )
 
+    text_states = Text(
+        width=250,
+        height=180,
+        size=75,
+        color='white',
+        weight='bold',
+        text_align=TextAlign.CENTER,
+    )
+    text_currencies = Text(
+        width=250,
+        height=180,
+        size=75,
+        color='white',
+        weight='bold',
+        text_align=TextAlign.CENTER,
+    )
+    text_datacoin = Text(
+        value='167',
+        width=250,
+        height=180,
+        size=75,
+        color='white',
+        weight='bold',
+        text_align=TextAlign.CENTER,
+    )
 
+    text_dataweather = Text(
+        value='167',
+        width=250,
+        height=180,
+        size=75,
+        color='white',
+        weight='bold',
+        text_align=TextAlign.CENTER,
+    )
+
+    text_shortname = Text(
+        width=250,
+        height=180,
+        size=75,
+        color='white',
+        weight='bold',
+        text_align=TextAlign.CENTER,
+    )
+
+    def submit_textfield_pais(e):
+        if database == 'MySQL':
+            pass
+        elif database == 'MongoDB':
+            response = mongo.query_data_c({'name': txt_pais.value})
+            print(response)
+            text_states.value = str(len(response['states']))
+            text_currencies.value = str(response['currencies'][0])
+            text_shortname.value = str(response['country_id'])
+        elif database == 'DynamoDB':
+            pass
+
+        page.update()
 
     chart_container = Container(
         width=950,
@@ -344,6 +411,7 @@ def main(page: Page):
         page.controls[0].controls[0].content.controls[0].content.controls[3].content.controls[1].color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[3].content.controls[0].icon_color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[3].update()
+        chart_container.clean()
         chart_container.content = Column(
             expand=True,
             alignment='center',
@@ -356,32 +424,114 @@ def main(page: Page):
                     content=Row(
                         alignment='center',
                         controls=[
-                            TextField(
-                                border_radius=6,
-                                label="Buscar pais",
-                                border=InputBorder.NONE,
-                                filled=True,
-                                hint_text="Ingrese el pais.",
-                                on_submit=submit_textfield_pais(e),
-                                value='Guatemala',
-                            ),
+                            txt_pais,
+                            ElevatedButton(
+                                text="Submit",
+                                on_click=lambda es: submit_textfield_pais(es),
+                                ),
                         ]
                     )
                 ),
-                Container(
-                    expand=4,
-                    border_radius=6,
-                    bgcolor=colors.with_opacity(0.05, colors.WHITE10),
-                    content=Text('DATOS DE CONSULTA DE PAISES', color='white'),
-                    padding=20,
-                )
+                Row(
+                    height=270,
+                    controls=[
+                        Container(
+                            expand=1,
+                            height=250,
+                            width=250,
+                            border_radius=6,
+                            bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                            content=Column(
+                                controls=[
+                                    Text('ESTADOS', color='white', size=24),
+                                    text_states,
+                                ]
+                            ),
+                            padding=20,
+                        ),
+                        Container(
+                            expand=1,
+                            height=250,
+                            width=250,
+                            border_radius=6,
+                            bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                            content=Column(
+                                controls=[
+                                    Text('DATOS TOTALES DE MONEDA', color='white', size=24),
+                                    text_datacoin,
+                                ]
+                            ),
+                            padding=20,
+                        ),
+                        Container(
+                            expand=1,
+                            height=250,
+                            width=250,
+                            border_radius=6,
+                            bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                            content=Column(
+                                controls=[
+                                    Text('DATOS TOTALES SOBRE CLIMA', color='white', size=24),
+                                    text_dataweather,
+                                ]
+                            ),
+                            padding=20,
+                        ),
+                    ]
+                ),
+                Row(
+                    height=270,
+                    controls=[
+                        Container(
+                            expand=1,
+                            height=250,
+                            width=250,
+                            border_radius=6,
+                            bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                            content=Column(
+                                controls=[
+                                    Text('ABREVIATURA', color='white', size=24),
+                                    text_shortname,
+                                ]
+                            ),
+                            padding=20,
+                        ),
+                        Container(
+                            expand=1,
+                            height=250,
+                            width=250,
+                            border_radius=6,
+                            bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                            content=Column(
+                                controls=[
+                                    Text('SIMBOLO DE MONEDA', color='white', size=24),
+                                    text_currencies,
+                                ]
+                            ),
+                            padding=20,
+                        ),
+                        Container(
+                            expand=1,
+                            height=250,
+                            width=250,
+                            border_radius=6,
+                            bgcolor=colors.with_opacity(0.05, colors.WHITE10),
+                            content=Column(
+                                controls=[
+                                    Text('DATO RANDOM', color='white', size=24),
+
+                                ]
+                            ),
+                            padding=20,
+                        ),
+                    ]
+                ),
             ]
         )
+        page.update()
         chart_container.update()
 
-    # def submit_textfield_pais(e):
-    #     valor = e.value
-    #     print(valor)
+
 
     def button_moneda(e):
         clean_selected_color()
@@ -390,7 +540,7 @@ def main(page: Page):
         page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[1].color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[4].content.controls[0].icon_color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[4].update()
-
+        chart_container.clean()
         chart = TimeChart()
         chart_container.content = Column(
             expand=True,
@@ -475,13 +625,12 @@ def main(page: Page):
         chart_container.update()
 
     def button_bd(e):
+        global database
+        database = 'MongoDB'
         clean_selected_color()
-        chart_container.content = Text("Changing db", color='white', weight='bold', size=18, animate_opacity=200)
-        chart_container.update()
-
+        database = str(e.data)
 
     # add class to page
-
     page.add(
         Row(
             alignment=MainAxisAlignment.START,

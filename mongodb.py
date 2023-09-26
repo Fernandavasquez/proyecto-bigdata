@@ -25,16 +25,10 @@ class MongoDB:
             self.__country_weather.insert_one(data)
             print('Insertado con exito! ')
 
-    def query_dataC(self, key_value: dict):
-        response = self.__country.find(key_value)
+    def query_data_c(self, key_value: dict):
+        response = self.__country.find_one(key_value)
+        return response
 
-        # if len(response['Items']) == 0:
-        #     print('El nombre del pais que busca no existe!')
-        # else:
-        #     for i in response['Items']:
-        #         print('Pais: ' + i['name'] + ' -> ' + ' Simbolo: ' + i['currencies'][0] + ' -> ' + 'Estados:' + str(
-        #             len(i['states'])))
-        #         self.__country_id = i['country_id']
 
     def query_dataCC(self, key_value: dict):
         response = self.__country_coin.find(key_value)
