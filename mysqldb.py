@@ -2,7 +2,6 @@ import pymongo
 import mysql.connector
 import datetime
 
-
 # Configurar la conexión a DynamoDB
 mongo = pymongo.MongoClient('mongodb://localhost:27017/')
 mongo_db = mongo['dbproyecto']
@@ -18,8 +17,8 @@ conexion_mysql = mysql.connector.connect(
     database="dbProyecto"
 )
 
-
 cursor_mysql = conexion_mysql.cursor()
+
 
 # Función para extraer datos de DynamoDB
 def extraer_datos_de_mongoCountry():
@@ -27,7 +26,7 @@ def extraer_datos_de_mongoCountry():
     datos_mongodb_states = []
     mongo_dataC = mongo_country.find()
     for item in mongo_dataC:
-        datos_mongodb.append((item['name'], item['country_id'], item['currencies'][0]))
+        datos_mongodb.append((item['name'], item['country_id'], item['currencies'][0], item['capital']))
         for item2 in item['states']:
             datos_mongodb_states.append((item2, item['country_id']))
     return datos_mongodb, datos_mongodb_states
@@ -36,11 +35,11 @@ def extraer_datos_de_mongoCountry():
 def extraer_datos_de_mongodbCoin():
     datos_mongodb = []
     for item in mongo_countryc.find():
-
         datos_mongodb.append((item['_id'], item['base'], item['currencies_value']['GTQ'],
                               item['currencies_value']['USD'], item['currencies_value']['EUR'],
                               item['country_id']))
     return datos_mongodb
+
 
 def extraer_datos_de_mongodbWeather():
     datos_mongodb = []
@@ -49,14 +48,15 @@ def extraer_datos_de_mongodbWeather():
         datos_mongodb.append((item['_id'], item['_id'][:10], item['country_id']))
         for item2 in item['state_weather']:
             datos_mongodb_weather.append((item2['state_name'],
-                               item2['weather_data']['Max'], item2['weather_data']['Min'],
-                               item2['weather_data']['Promedio'], item['_id']))
+                                          item2['weather_data']['Min'], item2['weather_data']['Max'],
+                                          item2['weather_data']['Promedio'], item['_id']))
 
     return datos_mongodb, datos_mongodb_weather
 
+
 # Función para insertar datos en MySQL
 def insertar_datos_en_mysqlCountry(conexion_mysql, datos):
-    insert_query = "INSERT INTO tblcountry (name, country_id, base) VALUES (%s, %s, %s)"
+    insert_query = "INSERT INTO tblcountry (name, country_id, base, capital) VALUES (%s, %s, %s, %s)"
 
     try:
         cursor_mysql.executemany(insert_query, datos)
@@ -64,16 +64,17 @@ def insertar_datos_en_mysqlCountry(conexion_mysql, datos):
         print("Datos insertados en MySQL correctamente.")
     except mysql.connector.Error as err:
         print(f"Error al insertar datos en MySQL: {err}")
+
 
 def insertar_datos_en_mysqlStates(conexion_mysql, datos):
     insert_query = "INSERT INTO tblestados (name, tblcountry_country_id) VALUES (%s, %s)"
-
     try:
         cursor_mysql.executemany(insert_query, datos)
         conexion_mysql.commit()
         print("Datos insertados en MySQL correctamente.")
     except mysql.connector.Error as err:
         print(f"Error al insertar datos en MySQL: {err}")
+
 
 def insertar_datos_en_mysqlCoin(conexion_mysql, datos):
     insert_query = "INSERT INTO tblcountrycoin (id_coin, base, GTQ, USD, EUR, tblcountry_country_id) VALUES (%s, %s,%s, %s, %s, %s)"
@@ -81,9 +82,10 @@ def insertar_datos_en_mysqlCoin(conexion_mysql, datos):
     try:
         cursor_mysql.executemany(insert_query, datos)
         conexion_mysql.commit()
-        print("Datos insertados en MySQL correctamente.")
+        # print("Datos insertados en MySQL correctamente.")
     except mysql.connector.Error as err:
         print(f"Error al insertar datos en MySQL: {err}")
+        print(f"datos: {datos}")
 
 
 def insertar_datos_en_mysqlCWeather(conexion_mysql, datos):
@@ -92,9 +94,11 @@ def insertar_datos_en_mysqlCWeather(conexion_mysql, datos):
     try:
         cursor_mysql.executemany(insert_query, datos)
         conexion_mysql.commit()
-        print("Datos insertados en MySQL correctamente.")
+        # print("Datos insertados en MySQL correctamente.")
     except mysql.connector.Error as err:
         print(f"Error al insertar datos en MySQL: {err}")
+        print(f"datos: {datos}")
+
 
 def insertar_datos_en_mysqlWeather(conexion_mysql, datos):
     insert_query = "INSERT INTO tblweather (state_name, min, max, promedio, tblcountry_weather_id) " \
@@ -103,9 +107,10 @@ def insertar_datos_en_mysqlWeather(conexion_mysql, datos):
     try:
         cursor_mysql.executemany(insert_query, datos)
         conexion_mysql.commit()
-        print("Datos insertados en MySQL correctamente.")
+        # print("Datos insertados en MySQL correctamente.")
     except mysql.connector.Error as err:
         print(f"Error al insertar datos en MySQL: {err}")
+        print(f"datos: {datos}")
 
 
 def query_MysqlCountry(busqueda: str):
@@ -118,6 +123,7 @@ def query_MysqlCountry(busqueda: str):
     resultados = cursor_mysql.fetchall()
     return resultados
 
+
 def query_dataCC(busqueda):
     consulta = "SELECT * FROM tblcountrycoin WHERE tblcountry_country_id = %s"
     valor_a_buscar = busqueda
@@ -129,13 +135,15 @@ def query_dataCC(busqueda):
     response_eur = []
     base = ''
     for item in resultados:
-       # print(item)
+        # print(item)
         response_gtq.append((item[0][:10], item[2]))
         response_usd.append((item[0][:10], item[3]))
         response_eur.append((item[0][:10], item[4]))
         base = item[5]
 
     return response_usd, response_eur, response_gtq, base
+
+
 def query_dataestados(busqueda):
     consulta = "SELECT COUNT(id) FROM tblestados WHERE tblcountry_country_id = %s"
     valor_a_buscar = busqueda
@@ -199,3 +207,34 @@ def query_dataweather_matplotlib(country_id: str):
         data_matplotlib.append(response_end)
         date += datetime.timedelta(days=1)
     return data_matplotlib
+
+
+def delete_all():
+    try:
+        consulta = "TRUNCATE TABLE dbproyecto.tblweather;"
+        cursor_mysql.execute(consulta)
+        conexion_mysql.commit()
+        print("Se vacio correctamente la dabla weather")
+
+        consulta = "TRUNCATE TABLE dbproyecto.tblestados;"
+        cursor_mysql.execute(consulta)
+        conexion_mysql.commit()
+        print("Se vacio correctamente la dabla estados")
+
+        consulta = "DELETE FROM dbproyecto.tblcountrycoin;"
+        cursor_mysql.execute(consulta)
+        conexion_mysql.commit()
+        print("Se vacio correctamente la dabla countrycoin")
+
+        consulta = "DELETE FROM dbproyecto.tblcountry_weather;"
+        cursor_mysql.execute(consulta)
+        conexion_mysql.commit()
+        print("Se vacio correctamente la dabla country_weather")
+
+        consulta = "DELETE FROM dbproyecto.tblcountry;"
+        cursor_mysql.execute(consulta)
+        conexion_mysql.commit()
+        print("Se vacio correctamente la dabla country")
+
+    except mysql.connector.Error as err:
+        print(f"Error al eliminar datos en MySQL: {err}")

@@ -905,8 +905,61 @@ def main(page: Page):
         page.controls[0].controls[0].content.controls[0].content.controls[9].content.controls[1].color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[9].content.controls[0].icon_color = 'white'
         page.controls[0].controls[0].content.controls[0].content.controls[9].update()
-        chart_container.content = Text("CLICKED IN ANALYTICS", color='white', size=18, opacity=1, animate_opacity=200)
+        #chart_container.content = Text("CLICKED IN ANALYTICS", color='white', size=18, opacity=1, animate_opacity=200)
+        chart_container.content = Row(
+                                    expand=True,
+                                    alignment='center',
+                                    vertical_alignment='center',
+                                    controls=[
+                                        Container(
+                                            ElevatedButton(color=colors.GREEN_ACCENT,
+                                                           bgcolor='white10',
+                                                           icon=icons.UPLOAD,
+                                                           icon_color=colors.GREEN_ACCENT,
+                                                           text="Cargar base de datos",
+                                                           on_click=lambda es: upload_database(es),
+                                                           )
+                                        ),
+                                        Container(
+                                            ElevatedButton(color=colors.RED_ACCENT,
+                                                           bgcolor='white10',
+                                                           icon=icons.DELETE,
+                                                           icon_color=colors.RED_ACCENT,
+                                                           text="Borrar base de datos",
+                                                           on_click=lambda es: delete_database(es),
+                                                           )
+                                        )
+                                    ],
+                                )
+
         chart_container.update()
+
+        def upload_database(es):
+            # Obtener datos de DynamoDB
+            datos_mongodb_country, datos_mongodb_states = mysqldb.extraer_datos_de_mongoCountry()
+            datos_mongodb_coin = mysqldb.extraer_datos_de_mongodbCoin()
+            datos_mongodb_cweather, datos_mongodb_weather = mysqldb.extraer_datos_de_mongodbWeather()
+
+            # Insertar los datos en MySQL
+            mysqldb.insertar_datos_en_mysqlCountry(mysqldb.conexion_mysql, datos_mongodb_country)
+            print("INSERCION 1/5 TERMINADA")
+            mysqldb.insertar_datos_en_mysqlStates(mysqldb.conexion_mysql, datos_mongodb_states)
+            print("INSERCION 2/5 TERMINADA")
+            for x in datos_mongodb_coin:
+                auxlist = [x]
+                mysqldb.insertar_datos_en_mysqlCoin(mysqldb.conexion_mysql, auxlist)
+            print("INSERCION 3/5 TERMINADA")
+            for x in datos_mongodb_cweather:
+                auxlist = [x]
+                mysqldb.insertar_datos_en_mysqlCWeather(mysqldb.conexion_mysql, auxlist)
+            print("INSERCION 4/5 TERMINADA")
+            for x in datos_mongodb_weather:
+                auxlist = [x]
+                mysqldb.insertar_datos_en_mysqlWeather(mysqldb.conexion_mysql, auxlist)
+            print("INSERCION 5/5 TERMINADA")
+
+        def delete_database(es):
+            mysqldb.delete_all()
 
     def button_bd(e):
         global database
