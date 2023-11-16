@@ -9,10 +9,38 @@ from doubleline_chart import TimeDoubleChart
 from mongodb import MongoDB
 from matplotchart import TimeMatPlotChart
 from dynamodb import DynamoDB
+from chart_with_r import ChartWithR
 
+query = f"""SELECT tblcountry.base, avg(GTQ) as promedio FROM dbproyecto.tblcountrycoin
+                INNER JOIN dbproyecto.tblcountry
+                ON tblcountry.base = tblcountrycoin.base
+                GROUP BY tblcountry.base
+                ORDER BY promedio DESC LIMIT 5;"""
 
+specifications = {"query": query, "c_str": "base", "c_num": "amount",
+                  "color": "rgb(0.27, 0.82, 0.27, 0.8)", "tittle": "Top 5 monedas con mayor valor 2023",
+                  "xlab": "Base de moneda",  "ylab": "Promedio valor en Q", "ylim": "c(0, 10)"}
+
+chart_1 = ChartWithR("monedas")
+chart_1.create_chart(specifications)
+
+query = f"""SELECT tblcountry.name, avg(max) temperatura_maxima FROM dbproyecto.tblweather
+            INNER JOIN dbproyecto.tblcountry_weather
+            ON tblweather.tblcountry_weather_id = tblcountry_weather.id
+            INNER JOIN dbproyecto.tblcountry
+            ON tblcountry.country_id = tblcountry_weather.tblcountry_country_id
+            GROUP BY tblcountry.name
+            ORDER BY temperatura_maxima DESC LIMIT 10;"""
+
+specifications = {"query": query, "c_str": "name", "c_num": "temperatura_maxima",
+"color": "c(rgb(0.822, 0, 0, 1), rgb(0.822, 0, 0, 0.96), rgb(0.822, 0, 0, 0.92), rgb(0.822, 0, 0, 0.88), rgb(0.822, 0, 0, 0.84), rgb(0.822, 0, 0, 0.80), rgb(0.822, 0, 0, 0.76), rgb(0.822, 0, 0, 0.72), rgb(0.822, 0, 0, 0.68), rgb(0.822, 0, 0, 0.64))",
+                  "tittle": "Top 10 paises con temperatura muy caliente en 2023",
+                  "xlab": "Nombre de paises",  "ylab": "Promedio Temperatura C°", "ylim": "c(0, 40)"}
+
+chart_1 = ChartWithR("temperatura_max")
+chart_1.create_chart(specifications)
 class ModernNavBar(UserControl):
-    def __init__(self, func, pais, moneda, comparar_moneda, clima, comparar_clima, clima_moneda, analisis, db):
+    def __init__(self, func, pais, moneda, comparar_moneda, clima, comparar_clima, clima_moneda, analisis, graficas_r, db):
         self.func = func
         self.button_pais = pais
         self.button_moneda = moneda
@@ -21,6 +49,7 @@ class ModernNavBar(UserControl):
         self.button_comparar_clima = comparar_clima
         self.button_clima_moneda = clima_moneda
         self.button_analisis = analisis
+        self.button_graficas_r = graficas_r
         self.button_db = db
         super().__init__()
 
@@ -106,7 +135,7 @@ class ModernNavBar(UserControl):
     def contained_icon(self, icon_name: str, text: str, funct):
         return Container(
             width=230,
-            height=48,
+            height=45,
             border_radius=10,
             on_hover=lambda e: self.highlight(e),
             on_click=partial(funct),
@@ -214,11 +243,12 @@ class ModernNavBar(UserControl):
                     Divider(height=5, color='transparent'),
                     self.contained_icon(icons.SEARCH, "Pais", self.button_pais),
                     self.contained_icon(icons.DATA_EXPLORATION_OUTLINED, "Moneda", self.button_moneda),
-                    self.contained_icon(icons.BAR_CHART, "Comparar moneda", self.button_comparar_moneda),
+                    self.contained_icon(icons.AREA_CHART, "Comparar moneda", self.button_comparar_moneda),
                     self.contained_icon(icons.CLOUDY_SNOWING, "Clima", self.button_clima),
                     self.contained_icon(icons.PIE_CHART_ROUNDED, "Comparar clima", self.button_comparar_clima),
                     self.contained_icon(icons.MULTILINE_CHART_ROUNDED, "Clima-Moneda", self.button_clima_moneda),
                     self.contained_icon(icons.ANALYTICS_OUTLINED, "Analisis", self.button_analisis),
+                    self.contained_icon(icons.BAR_CHART, "Graficas R", self.button_graficas_r),
                     Divider(height=5, color='white54'),
                     self.contained_icon_dropdown(icons.DNS_ROUNDED, "Base de datos", self.button_db),
                 ]
@@ -230,7 +260,7 @@ def main(page: Page):
     mongo = MongoDB()
     dynamo = DynamoDB()
     # title
-    page.title = 'Flet Modern Sidebar'
+    page.title = 'Analisis de datos'
     # page width and height
     page.window_height = 750
     page.window_width = 1250
@@ -280,7 +310,7 @@ def main(page: Page):
             for items in page.controls[0].controls[0].content.controls[0].content.controls[3:]:
                 if isinstance(items, Container):
                     cont += 1
-                    if cont < 11:
+                    if cont < 12:
                         items.content.controls[1].opacity = 0
                         items.content.update()
                     else:
@@ -315,7 +345,7 @@ def main(page: Page):
             for items in page.controls[0].controls[0].content.controls[0].content.controls[3:]:
                 if isinstance(items, Container):
                     cont += 1
-                    if cont < 11:
+                    if cont < 12:
                         items.content.controls[1].opacity = 1
                         items.content.update()
                     else:
@@ -410,7 +440,7 @@ def main(page: Page):
                 # query for the weather data.
                 country_weather = mysqldb.query_dataweather(response[0][1])
                 country_weather_matplot = mysqldb.query_dataweather_matplotlib(response[0][1])
-                print(country_weather_matplot[0])
+                # print(country_weather_matplot[0])
         elif database == 'MongoDB':
             response = mongo.query_data_c({'name': txt_pais.value})
             if response is not None:
@@ -469,7 +499,7 @@ def main(page: Page):
     )
 
     def clean_selected_color():
-        for items in page.controls[0].controls[0].content.controls[0].content.controls[3:10]:
+        for items in page.controls[0].controls[0].content.controls[0].content.controls[3:11]:
             if isinstance(items, Container):
                 items.content.controls[1].color = 'white54'
                 items.content.controls[0].icon_color = 'white54'
@@ -961,6 +991,30 @@ def main(page: Page):
         def delete_database(es):
             mysqldb.delete_all()
 
+    def button_graficas_r(e):
+        clean_selected_color()
+
+        page.controls[0].controls[0].content.controls[0].content.controls[10].bgcolor = 'white24'
+        page.controls[0].controls[0].content.controls[0].content.controls[10].content.controls[1].color = 'white'
+        page.controls[0].controls[0].content.controls[0].content.controls[10].content.controls[0].icon_color = 'white'
+        page.controls[0].controls[0].content.controls[0].content.controls[10].update()
+        chart_container.content = Column(
+            expand=True,
+            alignment='center',
+            horizontal_alignment='center',
+            controls=[
+                Container(
+                    Image(src="images/monedas.png"),
+                    border_radius=10
+                ),
+                Container(
+                    Image(src="images/temperatura_max.png"),
+                    border_radius=10
+                )
+            ],
+        )
+        page.update()
+        chart_container.update()
     def button_bd(e):
         global database
         database = 'MongoDB'
@@ -984,7 +1038,7 @@ def main(page: Page):
                     padding=10,
                     content=ModernNavBar(animate_sidebar, button_pais, button_moneda, button_comparar_moneda,
                                          button_clima, button_comparar_clima, button_clima_moneda, button_analisis,
-                                         button_bd),
+                                         button_graficas_r, button_bd),
                 ),
                 chart_container,
             ],
